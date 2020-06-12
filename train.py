@@ -152,6 +152,14 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
 
       iteration += 1
 
+def get_waveglow_config(path):
+  with open(path) as f:
+    data = f.read()
+  config = json.loads(data)
+  waveglow_config = config["waveglow_config"]
+  waveglow_config['WN_config']['n_channels'] = 512
+  return waveglow_config
+
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('-c', '--config', type=str, help='JSON file for configuration', default='config.json')
