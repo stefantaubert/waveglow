@@ -171,9 +171,11 @@ if __name__ == "__main__":
   global waveglow_config
   waveglow_config = config["waveglow_config"]
   train_config['fp16_run'] = False
-  train_config['batch_size'] = 4
+  train_config['batch_size'] = 1
   train_config['iters_per_checkpoint'] = 50
   data_config['training_files'] = "/datasets/models/taco2pt_ms/filelist/ljs_ipa/1/audio_text_train_filelist.csv"
+  data_config['segment_length'] = 4000
+  waveglow_config['WN_config']['n_channels'] = 512
   num_gpus = torch.cuda.device_count()
   if num_gpus > 1:
     if args.group_name == '':
