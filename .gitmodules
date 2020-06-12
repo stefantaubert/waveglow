@@ -1,3 +1,4 @@
 [submodule "tacotron2"]
 	path = tacotron2
-	url = http://github.com/NVIDIA/tacotron2
+	url = https://github.com/stefantaubert/tacotron2
+	branch = master
