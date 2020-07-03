@@ -163,13 +163,13 @@ if __name__ == "__main__":
   with open(args.config) as f:
     data = f.read()
   config = json.loads(data)
-  train_config = config["train_config"]
+  train_config = args.train_config
   global data_config
-  data_config = config["data_config"]
+  data_config = args.data_config
   global dist_config
-  dist_config = config["dist_config"]
+  dist_config = args.dist_config
   global waveglow_config
-  waveglow_config = config["waveglow_config"]
+  waveglow_config = args.waveglow_config
   train_config['fp16_run'] = False
   train_config['batch_size'] = 4
   train_config['iters_per_checkpoint'] = 50
