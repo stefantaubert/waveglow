@@ -1,0 +1,10 @@
+/datasets/LJSpeech-1.1/wavs/LJ001-0001.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0002.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0003.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0004.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0005.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0006.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0007.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0008.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0009.wav
+/datasets/LJSpeech-1.1/wavs/LJ001-0010.wav

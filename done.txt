@@ -1,0 +1,6 @@
+```bash
+ls /datasets/LJSpeech-1.1/wavs/*.wav | tail -n+10 > train_files.txt
+ls /datasets/LJSpeech-1.1/wavs/*.wav | head -n10 > test_files.txt
+mkdir checkpoints
+python train.py -c config.json
+```
