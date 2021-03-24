@@ -63,26 +63,3 @@ def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, spe
   logger.info(f"Imagescore: {score*100}%")
   logger.info(f"Saved output to: {val_dir}")
 
-
-if __name__ == "__main__":
-
-  # validate(
-  #   base_dir="/datasets/models/taco2pt_v5",
-  #   train_name="pretrained",
-  #   entry_id=865
-  # )
-
-  # validate(
-  #   base_dir="/datasets/models/taco2pt_v5",
-  #   train_name="pretrained_v2",
-  #   entry_id=865
-  # )
-
-  validate(
-    base_dir="/datasets/models/taco2pt_v5",
-    train_name="pretrained_v3",
-    entry_id=865,
-    custom_hparams={
-      "sampling_rate": 44100
-    }
-  )

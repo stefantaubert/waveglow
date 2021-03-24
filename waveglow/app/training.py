@@ -80,25 +80,3 @@ def continue_training(base_dir: str, train_name: str, custom_hparams: Optional[D
     save_checkpoint_dir=get_checkpoints_dir(train_dir),
     debug_logger=logger
   )
-
-
-if __name__ == "__main__":
-  mode = 0
-  if mode == 0:
-    start_new_training(
-      base_dir="/datasets/models/taco2pt_v5",
-      train_name="debug",
-      merge_name="thchs_ljs",
-      prep_name="default",
-      custom_hparams={
-        "batch_size": 3,
-        "iters_per_checkpoint": 5,
-        "cache_wavs": False
-      },
-    )
-
-  elif mode == 1:
-    continue_training(
-      base_dir="/datasets/models/taco2pt_v5",
-      train_name="debug"
-    )

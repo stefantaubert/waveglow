@@ -41,12 +41,3 @@ def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, merge_name:
   # save_valset(prep_dir, wholeset)
 
   save_prep_settings(train_dir, merge_name=merge_name, prep_name=prep_name)
-
-
-if __name__ == "__main__":
-  dl_pretrained(
-    version=3,
-    train_name="pretrained_v3",
-    base_dir="/datasets/models/taco2pt_v5",
-    prep_name="arctic_ipa",
-  )
