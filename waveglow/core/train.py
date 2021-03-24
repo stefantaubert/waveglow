@@ -48,8 +48,9 @@ class WaveGlowLoss(torch.nn.Module):
     return result
 
 
-def load_model(hparams: HParams, state_dict: Optional[dict]):
-  model = WaveGlow(hparams).cuda()
+def load_model(hparams: HParams, state_dict: Optional[dict]) -> WaveGlow:
+  model = WaveGlow(hparams)
+  model = model.cuda()
 
   if state_dict is not None:
     model.load_state_dict(state_dict)

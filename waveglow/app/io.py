@@ -11,7 +11,6 @@ from audio_utils import float_to_wav
 from audio_utils.mel import plot_melspec
 from image_utils import calculate_structual_similarity, stack_images_vertically
 from tts_preparation import PreparedData
-from waveglow.app.io import get_train_root_dir
 from waveglow.utils import (get_parent_dirname, get_subdir, parse_json,
                             save_json)
 

@@ -66,12 +66,3 @@ def app_infer(base_dir: str, train_name: str, wav_path: str, custom_checkpoint: 
 
   logger.info(f"Imagescore: {score*100}%")
   logger.info(f"Saved output to: {infer_dir}")
-
-
-if __name__ == "__main__":
-  infer(
-    base_dir="/datasets/models/taco2pt_v5",
-    train_name="pretrained_v3",
-    wav_path="/datasets/LJSpeech-1.1-lite/wavs/LJ003-0347.wav",
-    denoiser_strength=0.001,
-  )
