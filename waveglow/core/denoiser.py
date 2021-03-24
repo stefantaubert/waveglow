@@ -1,11 +1,9 @@
 from logging import Logger
 
 import torch
+from audio_utils.mel import STFT, TSTFTHParams
 from torch import Tensor
-
-from src.core.common.stft import STFT
-from src.core.common.taco_stft import TSTFTHParams
-from src.core.waveglow.model import WaveGlow
+from waveglow.core.model import WaveGlow
 
 BIAS_MEL_LENGTH = 88
 

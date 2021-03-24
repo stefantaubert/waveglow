@@ -7,9 +7,10 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 import torch
 from audio_utils import is_overamp
-from src.core.common.train import overwrite_custom_hparams
-from src.core.waveglow.denoiser import Denoiser
-from src.core.waveglow.train import CheckpointWaveglow, load_model
+from waveglow.core.denoiser import Denoiser
+from waveglow.core.model_checkpoint import CheckpointWaveglow
+from waveglow.core.train import load_model
+from waveglow.utils import overwrite_custom_hparams
 
 
 class Synthesizer():

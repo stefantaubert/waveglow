@@ -3,9 +3,9 @@ from logging import Logger
 
 from torch.optim.adam import Adam  # pylint: disable=no-name-in-module
 
-from src.core.common.checkpoint import Checkpoint
-from src.core.waveglow.hparams import HParams
-from src.core.waveglow.model import WaveGlow
+from waveglow.checkpoint import Checkpoint
+from waveglow.core.hparams import HParams
+from waveglow.core.model import WaveGlow
 
 
 @dataclass

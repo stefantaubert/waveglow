@@ -3,12 +3,11 @@ from logging import Logger
 from typing import Tuple
 
 import torch
-from src.core.common.audio import get_wav_tensor_segment
-from src.core.common.taco_stft import TacotronSTFT
-from src.core.pre.prep.data import PreparedDataList
-from src.core.waveglow.hparams import HParams
+from audio_utils.mel import TacotronSTFT, get_wav_tensor_segment
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+from tts_preparation import PreparedDataList
+from waveglow.core.hparams import HParams
 
 
 class MelLoader(Dataset):

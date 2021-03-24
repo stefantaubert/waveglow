@@ -2,16 +2,14 @@ import os
 from logging import Logger
 from typing import Dict, Optional
 
-from src.app.io import (get_checkpoints_dir, get_train_log_file,
-                        get_train_logs_dir, load_prep_settings,
-                        save_prep_settings)
-from src.app.pre.merge_ds import get_merged_dir
-from src.app.pre.prepare import get_prep_dir, load_trainset, load_valset
-from src.app.utils import prepare_logger
-from src.app.waveglow.io import get_train_dir
-from src.core.common.train import get_custom_or_last_checkpoint
-from src.core.waveglow.model_checkpoint import CheckpointWaveglow
-from src.core.waveglow.train import continue_train, train
+from tts_preparation import (get_merged_dir, get_prep_dir, load_trainset,
+                             load_valset)
+from waveglow.app.io import (get_checkpoints_dir, get_train_dir,
+                             get_train_log_file, get_train_logs_dir,
+                             load_prep_settings, save_prep_settings)
+from waveglow.core.model_checkpoint import CheckpointWaveglow
+from waveglow.core.train import continue_train, train
+from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
 
 
 def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Optional[int], logger: Logger) -> Optional[CheckpointWaveglow]:

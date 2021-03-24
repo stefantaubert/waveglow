@@ -2,12 +2,11 @@ from logging import Logger
 from typing import Dict, Optional
 
 import torch
-
 from audio_utils import normalize_wav
-from src.core.common.taco_stft import TacotronSTFT
-from src.core.common.utils import cosine_dist_mels
-from src.core.waveglow.synthesizer import Synthesizer
-from src.core.waveglow.train import CheckpointWaveglow
+from audio_utils.mel import TacotronSTFT
+from waveglow.core.synthesizer import Synthesizer
+from waveglow.utils import cosine_dist_mels
+from waveglow.core.model_checkpoint import CheckpointWaveglow
 
 
 def infer(wav_path: str, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, logger: Logger):

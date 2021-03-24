@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.core.common.taco_stft import TSTFTHParams
+from audio_utils.mel import TSTFTHParams
 
 
 @dataclass

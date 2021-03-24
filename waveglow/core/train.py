@@ -5,29 +5,25 @@ from typing import Dict, Iterator, List, Optional
 
 import numpy as np
 import torch
-from src.core.common.checkpoint import Checkpoint, get_iteration
-from src.core.common.train import (SaveIterationSettings, check_save_it,
-                                   copy_state_dict,
-                                   get_continue_batch_iteration,
-                                   get_continue_epoch,
-                                   get_formatted_current_total,
-                                   get_last_checkpoint, get_pytorch_filename,
-                                   init_cuddn, init_cuddn_benchmark,
-                                   init_torch_seed, log_hparams,
-                                   overwrite_custom_hparams, skip_batch,
-                                   validate_model)
-from src.core.pre.prep.data import PreparedDataList
-from src.core.waveglow.dataloader import (parse_batch, prepare_trainloader,
-                                          prepare_valloader)
-from src.core.waveglow.hparams import (ExperimentHParams, HParams,
-                                       OptimizerHParams)
-from src.core.waveglow.logger import WaveglowLogger
-from src.core.waveglow.model import WaveGlow
-from src.core.waveglow.model_checkpoint import CheckpointWaveglow
 from torch import nn
 from torch.nn import Parameter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from tts_preparation import PreparedDataList
+from waveglow.checkpoint import Checkpoint, get_iteration
+from waveglow.core.dataloader import (parse_batch, prepare_trainloader,
+                                      prepare_valloader)
+from waveglow.core.hparams import ExperimentHParams, HParams, OptimizerHParams
+from waveglow.core.logger import WaveglowLogger
+from waveglow.core.model import WaveGlow
+from waveglow.core.model_checkpoint import CheckpointWaveglow
+from waveglow.utils import (SaveIterationSettings, check_save_it,
+                            copy_state_dict, get_continue_batch_iteration,
+                            get_continue_epoch, get_formatted_current_total,
+                            get_last_checkpoint, get_pytorch_filename,
+                            init_cuddn, init_cuddn_benchmark, init_torch_seed,
+                            log_hparams, overwrite_custom_hparams, skip_batch,
+                            validate_model)
 
 
 class WaveGlowLoss(torch.nn.Module):

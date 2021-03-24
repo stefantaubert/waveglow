@@ -1,16 +1,16 @@
 import os
 from typing import Dict, Optional
 
-from src.app.io import (get_checkpoints_dir, get_val_dir, get_val_log,
-                        load_prep_settings, save_val_orig_plot,
-                        save_val_orig_wav, save_val_plot, save_val_wav)
-from src.app.pre.merge_ds import get_merged_dir, load_merged_speakers_json
-from src.app.pre.prepare import get_prep_dir, load_testset, load_valset
-from src.app.utils import prepare_logger
-from src.app.waveglow.io import get_train_dir, save_diff_plot, save_v
-from src.core.common.train import get_custom_or_last_checkpoint
-from src.core.waveglow.inference import infer
-from src.core.waveglow.train import CheckpointWaveglow
+from tts_preparation import (get_merged_dir, get_prep_dir,
+                             load_merged_speakers_json, load_testset,
+                             load_valset)
+from waveglow.app.io import (get_checkpoints_dir, get_train_dir, get_val_dir,
+                             get_val_log, load_prep_settings, save_diff_plot,
+                             save_v, save_val_orig_plot, save_val_orig_wav,
+                             save_val_plot, save_val_wav)
+from waveglow.core.inference import infer
+from waveglow.core.model_checkpoint import CheckpointWaveglow
+from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
 
 
 def validate(base_dir: str, train_name: str, entry_id: Optional[int] = None, speaker: Optional[str] = None, ds: str = "val", custom_checkpoint: Optional[int] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None):
