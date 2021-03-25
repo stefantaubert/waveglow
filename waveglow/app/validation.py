@@ -2,6 +2,7 @@ import datetime
 import os
 from functools import partial
 from typing import Dict, Optional, Set
+from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SIGMA
 
 import imageio
 import numpy as np
@@ -56,30 +57,30 @@ def save_stats(val_dir: str, validation_entries: ValidationEntries) -> None:
 def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: str, iteration: int):
   dest_dir = get_val_entry_dir(val_dir, entry, iteration)
   imageio.imsave(os.path.join(dest_dir, "original.png"), output.mel_orig_img)
-  imageio.imsave(os.path.join(dest_dir, "inferred.png"), output.mel_inferred_img)
-  imageio.imsave(os.path.join(dest_dir, "diff.png"), output.mel_diff_img)
+  imageio.imsave(os.path.join(dest_dir, "inferred_denoised.png"), output.mel_inferred_denoised_img)
+  imageio.imsave(os.path.join(dest_dir, "diff.png"), output.mel_denoised_diff_img)
   np.save(os.path.join(dest_dir, "original.mel.npy"), output.mel_orig)
-  np.save(os.path.join(dest_dir, "inferred.mel.npy"), output.mel_inferred)
+  np.save(os.path.join(dest_dir, "inferred_denoised.mel.npy"), output.mel_inferred_denoised)
   float_to_wav(output.wav_orig, os.path.join(
     dest_dir, "original.wav"), sample_rate=output.orig_sr)
+
+  float_to_wav(output.wav_inferred_denoised, os.path.join(
+    dest_dir, "inferred_denoised.wav"), sample_rate=output.inferred_sr)
 
   float_to_wav(output.wav_inferred, os.path.join(
     dest_dir, "inferred.wav"), sample_rate=output.inferred_sr)
 
-  float_to_wav(output.wav_inferred_no_denoise, os.path.join(
-    dest_dir, "inferred_no_denoise.wav"), sample_rate=output.inferred_sr)
-
   stack_images_vertically(
     list_im=[
       os.path.join(dest_dir, "original.png"),
-      os.path.join(dest_dir, "inferred.png"),
+      os.path.join(dest_dir, "inferred_denoised.png"),
       os.path.join(dest_dir, "diff.png"),
     ],
     out_path=os.path.join(dest_dir, "comparison.png")
   )
 
 
-def app_validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
+def app_validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -100,7 +101,7 @@ def app_validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_nam
   )
 
 
-def app_validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
+def app_validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -122,7 +123,7 @@ def app_validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] =
   )
 
 
-def validate_core(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, ds: str = "val"):
+def validate_core(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set[int]], custom_checkpoints: Optional[Set[int]], sigma: float, denoiser_strength: float, custom_hparams: Optional[Dict[str, str]], full_run: bool, ds: str):
   if ds == "val":
     data = load_valset(prep_dir)
   elif ds == "test":

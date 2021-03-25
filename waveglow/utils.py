@@ -1,4 +1,3 @@
-from typing import Optional
 import dataclasses
 import json
 import logging
@@ -41,7 +40,6 @@ def disable_matplot_logger():
 
 def disable_numba_logger():
   disable_numba_core_logger()
-
 
 
 formatter = logging.Formatter(
@@ -502,6 +500,14 @@ def split_hparams_string(hparams: Optional[str]) -> Optional[Dict[str, str]]:
   assignments = hparams.split(",")
   result = dict([x.split("=") for x in assignments])
   return result
+
+
+def split_string(s: Optional[str]) -> Optional[List[str]]:
+  if s is None:
+    return None
+
+  res = s.split("|")
+  return res
 
 
 def to_gpu(x) -> torch.autograd.Variable:

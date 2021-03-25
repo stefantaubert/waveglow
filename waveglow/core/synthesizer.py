@@ -103,9 +103,9 @@ class Synthesizer():
       result.append(infer_res)
 
     output = self._concatenate_wavs(result, sentence_pause_s)
-    output = normalize_wav(output)
+    # output = normalize_wav(output)
 
-    for infer_res in result:
-      infer_res.wav = normalize_wav(infer_res.wav)
+    # for infer_res in result:
+    #   infer_res.wav = normalize_wav(infer_res.wav)
 
     return output, result
