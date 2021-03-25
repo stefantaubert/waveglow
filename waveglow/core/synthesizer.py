@@ -17,7 +17,6 @@ from waveglow.utils import overwrite_custom_hparams
 
 @dataclass
 class InferenceResult():
-  mel: np.ndarray
   wav: np.ndarray
   wav_denoised: np.ndarray
   sampling_rate: int
@@ -74,6 +73,10 @@ class Synthesizer():
     audio = audio.cpu()
     audio_np: np.ndarray = audio.numpy()
 
+    audio_denoised = audio_denoised.squeeze()
+    audio_denoised = audio_denoised.cpu()
+    audio_denoised_np: np.ndarray = audio_denoised.numpy()
+
     was_overamplified = False
 
     if is_overamp(audio_np):
@@ -81,12 +84,11 @@ class Synthesizer():
       self._logger.warn("Waveglow output was overamplified.")
 
     res = InferenceResult(
-      mel=mel,
       sampling_rate=self.hparams.sampling_rate,
       inference_duration_s=inference_duration_s,
       wav=audio_np,
       was_overamplified=was_overamplified,
-      wav_denoised=audio_denoised,
+      wav_denoised=audio_denoised_np,
       denoising_duration_s=denoising_duration,
     )
 

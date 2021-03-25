@@ -1,14 +1,16 @@
-import os
+from logging import getLogger
 
 import gdown
 import wget
-
 from waveglow.utils import create_parent_folder
 
 # src: https://ngc.nvidia.com/catalog/models/nvidia:waveglow_ljs_256channels
 
 
-def dl_wg(destination: str, version: int):
+def dl_wg(destination: str, version: int) -> None:
+  logger = getLogger(__name__)
+  logger.info(f"Downloading pretrained waveglow model v{version} from Nvida...")
+
   if version == 1:
     _dl_v1(destination)
   elif version == 2:
@@ -17,6 +19,8 @@ def dl_wg(destination: str, version: int):
     _dl_v3(destination)
   else:
     assert False
+    raise Exception
+  logger.info("Done.")
 
 
 def _dl_v3(destination: str):
@@ -36,14 +40,3 @@ def _dl_v1(destination: str):
   download_url = "https://drive.google.com/uc?id=1rpK8CzAAirq9sWZhe9nlfvxMF1dRgFbF"
   create_parent_folder(destination)
   gdown.download(download_url, destination)
-
-
-if __name__ == "__main__":
-  # dl_wg(
-  #   #destination = '/datasets/models/pretrained/waveglow_256channels_universal_v5.pt',
-  #   destination = '/tmp/testdl.pt',
-  # )
-
-  # _dl_v1(destination='/datasets/tmp/wg_v3/v1.pt')
-  # _dl_v2(destination='/datasets/tmp/wg_v3/v2.pt')
-  _dl_v3(destination='/datasets/tmp/wg_v3/v3.pt')

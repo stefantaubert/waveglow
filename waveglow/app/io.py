@@ -16,7 +16,7 @@ from waveglow.utils import (get_parent_dirname, get_subdir, parse_json,
 
 
 def get_train_dir(base_dir: str, train_name: str, create: bool):
-  return get_subdir(get_train_root_dir(base_dir, "waveglow", create), train_name, create)
+  return get_subdir(base_dir, train_name, create)
 
 
 def save_diff_plot(infer_dir: str):
@@ -45,10 +45,6 @@ def save_v(infer_dir: str):
 # _test_csv = "test.csv"
 # _val_csv = "validation.csv"
 _settings_json = "settings.json"
-
-
-def get_train_root_dir(base_dir: str, model_name: str, create: bool):
-  return get_subdir(base_dir, model_name, create)
 
 
 def get_train_logs_dir(train_dir: str):
@@ -100,11 +96,12 @@ def get_checkpoints_dir(train_dir: str):
 def load_prep_settings(train_dir: str) -> Tuple[str, str]:
   path = os.path.join(train_dir, _settings_json)
   res = parse_json(path)
-  return res["merge_name"], res["prep_name"]
+  return res["ttsp_dir"], res["merge_name"], res["prep_name"]
 
 
-def save_prep_settings(train_dir: str, merge_name: Optional[str], prep_name: Optional[str]):
+def save_prep_settings(train_dir: str, ttsp_dir: str, merge_name: Optional[str], prep_name: Optional[str]):
   settings = {
+    "ttsp_dir": ttsp_dir,
     "merge_name": merge_name,
     "prep_name": prep_name,
   }

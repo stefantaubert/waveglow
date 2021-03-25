@@ -1,36 +1,43 @@
 import logging
 import os
+import pathlib
 import shutil
 import sys
 import tempfile
 from dataclasses import asdict
 
 import torch
-from waveglow.core.waveglow.hparams import HParams
-from waveglow.core.waveglow.train import CheckpointWaveglow
+from waveglow.core.hparams import HParams
+from waveglow.core.train import CheckpointWaveglow
 
 
-def convert_glow(origin: str, destination: str, keep_orig: bool = False):
+def convert_glow(origin: str, destination: str, keep_orig: bool = False) -> CheckpointWaveglow:
+  logger = logging.getLogger(__name__)
+  logger.info("Pretrained model is beeing converted...")
   tmp_out = tempfile.mktemp()
-  _convert_core(origin, tmp_out)
+  res = _convert_core(origin, tmp_out)
   if keep_orig:
     if origin == destination:
-      original_path = "{}.orig".format(origin)
+      original_path = f"{origin}.orig"
       shutil.move(origin, original_path)
   else:
     os.remove(origin)
   shutil.move(tmp_out, destination)
+  logger.info("Done.")
+  return res
 
 
-def _convert_core(source: str, destination: str):
+def _convert_core(source: str, destination: str) -> CheckpointWaveglow:
   '''in version 3 there is only "model"'''
   assert os.path.isfile(source)
-
-  sys.path.append("src/core/waveglow/converter/")
+  logger = logging.getLogger(__name__)
+  # torch.nn.Module.dump_patches = True
+  rel_converter_location = str(pathlib.Path(__file__).parent.absolute())
+  sys.path.append(rel_converter_location)
   checkpoint_dict = torch.load(source, map_location='cpu')
 
   hparams = HParams(
-    # see WaveGlow paper (zotero://select/library/items/565NZEL4)
+    # see WaveGlow paper
     # "We use a sampling rate of 22,050kHz"
     sampling_rate=22050,
     # "we use mel-spectrograms with 80 bins"
@@ -77,19 +84,7 @@ def _convert_core(source: str, destination: str):
     state_dict=state_dict
   )
 
-  res.save(destination, logging.getLogger())
+  res.save(destination, logger)
 
-  print("Successfully converted. Output:", destination)
-
-
-if __name__ == "__main__":
-  _convert_core(
-    source="/datasets/tmp/wg_v3/v3.pt",
-    destination="/datasets/tmp/wg_v3/v3_conv.pt"
-  )
-
-  # convert_glow(
-  #   origin='/datasets/tmp/wg_v3/v3.pt',
-  #   destination='/datasets/tmp/wg_v3/v3_conv.pt',
-  #   keep_orig=True
-  # )
+  logger.info(f"Successfully converted.")
+  return res

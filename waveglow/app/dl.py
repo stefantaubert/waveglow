@@ -1,36 +1,37 @@
 import os
-from typing import Optional
+import shutil
+from logging import getLogger
 
-from waveglow.app.defaults import DEFAULT_WAVEGLOW
-from waveglow.app.io import (get_checkpoints_dir, get_train_dir,
-                             save_prep_settings)
+from waveglow.app.defaults import DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION
+from waveglow.app.io import (get_checkpoints_dir, get_train_dir)
 from waveglow.core.converter.convert import convert_glow
 from waveglow.core.dl_pretrained import dl_wg
 from waveglow.utils import get_pytorch_filename
 
 
-def get_checkpoint_pretrained(checkpoints_dir: str):
-  return os.path.join(checkpoints_dir, get_pytorch_filename("1"))
-
-
-def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, merge_name: Optional[str] = None, prep_name: Optional[str] = None, version: int = 3):
+def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION):
   train_dir = get_train_dir(base_dir, train_name, create=True)
   assert os.path.isdir(train_dir)
   checkpoints_dir = get_checkpoints_dir(train_dir)
-  dest_path = get_checkpoint_pretrained(checkpoints_dir)
+  tmp_dest_path = os.path.join(checkpoints_dir, get_pytorch_filename("1"))
 
-  print("Downloading pretrained waveglow model from Nvida...")
   dl_wg(
-    destination=dest_path,
+    destination=tmp_dest_path,
     version=version
   )
 
-  print("Pretrained model is now beeing converted to be able to use it...")
-  convert_glow(
-    origin=dest_path,
-    destination=dest_path,
+  checkpoint = convert_glow(
+    origin=tmp_dest_path,
+    destination=tmp_dest_path,
     keep_orig=False
   )
+
+  final_dest_path = os.path.join(checkpoints_dir, get_pytorch_filename(checkpoint.iteration))
+  if tmp_dest_path != final_dest_path:
+    shutil.move(tmp_dest_path, final_dest_path)
+
+  logger = getLogger(__name__)
+  logger.info(f"Completed. Downloaded to: {final_dest_path}")
 
   # if prep_name is not None:
   # merge_dir = get_merged_dir(base_dir, merge_name, create=False)
@@ -40,4 +41,4 @@ def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, merge_name:
   # # can be removed
   # save_valset(prep_dir, wholeset)
 
-  save_prep_settings(train_dir, merge_name=merge_name, prep_name=prep_name)
+  # save_prep_settings(train_dir, ttsp_dir=None, merge_name=merge_name, prep_name=prep_name)

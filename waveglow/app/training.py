@@ -22,8 +22,8 @@ def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Op
   return result
 
 
-def start_new_training(base_dir: str, train_name: str, merge_name: str, prep_name: str, custom_hparams: Optional[Dict[str, str]] = None, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None):
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+def start_new_training(base_dir: str, ttsp_dir: str, train_name: str, merge_name: str, prep_name: str, custom_hparams: Optional[Dict[str, str]] = None, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None):
+  merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
   train_dir = get_train_dir(base_dir, train_name, create=True)
   trainset = load_trainset(prep_dir)
@@ -46,7 +46,7 @@ def start_new_training(base_dir: str, train_name: str, merge_name: str, prep_nam
     logger=logger
   )
 
-  save_prep_settings(train_dir, merge_name, prep_name)
+  save_prep_settings(train_dir, ttsp_dir, merge_name, prep_name)
 
   train(
     custom_hparams=custom_hparams,
@@ -66,8 +66,8 @@ def continue_training(base_dir: str, train_name: str, custom_hparams: Optional[D
   logs_dir = get_train_logs_dir(train_dir)
   logger = prepare_logger(get_train_log_file(logs_dir))
 
-  merge_name, prep_name = load_prep_settings(train_dir)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  ttsp_dir, merge_name, prep_name = load_prep_settings(train_dir)
+  merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
   trainset = load_trainset(prep_dir)
   valset = load_valset(prep_dir)
