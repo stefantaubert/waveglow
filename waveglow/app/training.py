@@ -7,8 +7,9 @@ from tts_preparation import (get_merged_dir, get_prep_dir, load_trainset,
 from waveglow.app.io import (get_checkpoints_dir, get_train_dir,
                              get_train_log_file, get_train_logs_dir,
                              load_prep_settings, save_prep_settings)
-from waveglow.core.model_checkpoint import CheckpointWaveglow
-from waveglow.core.train import continue_train, train
+from waveglow.core import CheckpointWaveglow
+from waveglow.core import continue_train as continue_train_core
+from waveglow.core import train as train_core
 from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
 
 
@@ -22,7 +23,7 @@ def try_load_checkpoint(base_dir: str, train_name: Optional[str], checkpoint: Op
   return result
 
 
-def start_new_training(base_dir: str, ttsp_dir: str, train_name: str, merge_name: str, prep_name: str, custom_hparams: Optional[Dict[str, str]] = None, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None):
+def train(base_dir: str, ttsp_dir: str, train_name: str, merge_name: str, prep_name: str, custom_hparams: Optional[Dict[str, str]] = None, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None):
   merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
   train_dir = get_train_dir(base_dir, train_name, create=True)
@@ -48,7 +49,7 @@ def start_new_training(base_dir: str, ttsp_dir: str, train_name: str, merge_name
 
   save_prep_settings(train_dir, ttsp_dir, merge_name, prep_name)
 
-  train(
+  train_core(
     custom_hparams=custom_hparams,
     logdir=logs_dir,
     trainset=trainset,
@@ -59,7 +60,7 @@ def start_new_training(base_dir: str, ttsp_dir: str, train_name: str, merge_name
   )
 
 
-def continue_training(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
+def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -72,7 +73,7 @@ def continue_training(base_dir: str, train_name: str, custom_hparams: Optional[D
   trainset = load_trainset(prep_dir)
   valset = load_valset(prep_dir)
 
-  continue_train(
+  continue_train_core(
     custom_hparams=custom_hparams,
     logdir=logs_dir,
     trainset=trainset,

@@ -11,9 +11,8 @@ from image_utils.main import stack_images_horizontally
 from waveglow.app.defaults import DEFAULT_SENTENCE_PAUSE_S
 from waveglow.app.io import (get_checkpoints_dir, get_infer_log,
                              get_inference_root_dir, get_train_dir)
-from waveglow.core.inference import (InferenceEntries, InferenceEntryOutput,
-                                     infer)
-from waveglow.core.model_checkpoint import CheckpointWaveglow
+from waveglow.core import (CheckpointWaveglow, InferenceEntries,
+                           InferenceEntryOutput, infer as infer_core)
 from waveglow.utils import (get_custom_or_last_checkpoint, get_subdir,
                             prepare_logger)
 
@@ -73,7 +72,7 @@ def mel_inferred_denoised_h_plot(infer_dir: str, sentences: InferenceEntries):
   stack_images_horizontally(paths, path)
 
 
-def app_infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None):
+def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = 0.666, denoiser_strength: float = 0.00, sentence_pause_s: float = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -89,7 +88,7 @@ def app_infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rat
   mels = [np.load(mel_path)for mel_path in mel_paths]
   save_callback = partial(save_results, infer_dir=infer_dir)
 
-  complete_wav_denoised, inference_results = infer(
+  complete_wav_denoised, inference_results = infer_core(
     mels=mels,
     sampling_rate=sampling_rate,
     checkpoint=checkpoint,

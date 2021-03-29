@@ -2,21 +2,21 @@ import datetime
 import os
 from functools import partial
 from typing import Dict, Optional, Set
-from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SIGMA
 
 import imageio
 import numpy as np
 from audio_utils import float_to_wav
 from image_utils import stack_images_vertically
 from tqdm import tqdm
-from tts_preparation import (PreparedData, PreparedDataList, get_merged_dir,
+from tts_preparation import (PreparedData, get_merged_dir,
                              get_prep_dir, load_testset, load_valset)
 from tts_preparation.app.prepare2 import load_totalset
+from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SIGMA
 from waveglow.app.io import (_get_validation_root_dir, get_checkpoints_dir,
                              get_train_dir, load_prep_settings)
-from waveglow.core.model_checkpoint import CheckpointWaveglow
-from waveglow.core.validation import (ValidationEntries, ValidationEntryOutput,
-                                      validate)
+from waveglow.core import (CheckpointWaveglow, ValidationEntries,
+                           ValidationEntryOutput)
+from waveglow.core import validate as validate_core
 from waveglow.utils import (get_all_checkpoint_iterations, get_checkpoint,
                             get_last_checkpoint, get_subdir, prepare_logger)
 
@@ -80,14 +80,14 @@ def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: st
   )
 
 
-def app_validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
+def validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
   merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
 
-  validate_core(
+  _validate(
     train_dir=train_dir,
     train_name=train_name,
     prep_dir=prep_dir,
@@ -101,7 +101,7 @@ def app_validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_nam
   )
 
 
-def app_validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
+def validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -109,7 +109,7 @@ def app_validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] =
   merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
 
-  validate_core(
+  _validate(
     train_dir=train_dir,
     train_name=train_name,
     prep_dir=prep_dir,
@@ -123,7 +123,7 @@ def app_validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] =
   )
 
 
-def validate_core(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set[int]], custom_checkpoints: Optional[Set[int]], sigma: float, denoiser_strength: float, custom_hparams: Optional[Dict[str, str]], full_run: bool, ds: str):
+def _validate(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set[int]], custom_checkpoints: Optional[Set[int]], sigma: float, denoiser_strength: float, custom_hparams: Optional[Dict[str, str]], full_run: bool, ds: str):
   if ds == "val":
     data = load_valset(prep_dir)
   elif ds == "test":
@@ -166,7 +166,7 @@ def validate_core(train_dir, train_name: str, prep_dir: str, entry_ids: Optional
     taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
     save_callback = partial(save_results, val_dir=val_dir, iteration=iteration)
 
-    validation_entries = validate(
+    validation_entries = validate_core(
       checkpoint=taco_checkpoint,
       data=data,
       custom_hparams=custom_hparams,

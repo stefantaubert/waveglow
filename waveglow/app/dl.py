@@ -3,9 +3,8 @@ import shutil
 from logging import getLogger
 
 from waveglow.app.defaults import DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION
-from waveglow.app.io import (get_checkpoints_dir, get_train_dir)
-from waveglow.core.converter.convert import convert_glow
-from waveglow.core.dl_pretrained import dl_wg
+from waveglow.app.io import get_checkpoints_dir, get_train_dir
+from waveglow.core import convert_glow, dl_wg
 from waveglow.utils import get_pytorch_filename
 
 

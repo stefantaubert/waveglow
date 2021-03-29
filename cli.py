@@ -1,13 +1,11 @@
 import os
 from argparse import ArgumentParser
 
-from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH,
-                                   DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA,
-                                   DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION)
-from waveglow.app.dl import dl_pretrained
-from waveglow.app.inference import app_infer
-from waveglow.app.training import continue_training, start_new_training
-from waveglow.app.validation import app_validate, app_validate_generic
+from waveglow.app import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SENTENCE_PAUSE_S,
+                          DEFAULT_SIGMA, DEFAULT_WAVEGLOW,
+                          DEFAULT_WAVEGLOW_VERSION, continue_train,
+                          dl_pretrained, infer, train, validate,
+                          validate_generic)
 from waveglow.utils import (split_hparams_string, split_int_set_str,
                             split_string)
 
@@ -27,7 +25,7 @@ def init_train_parser(parser: ArgumentParser):
 
 def train_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  start_new_training(**args)
+  train(**args)
 
 
 def init_continue_train_parser(parser: ArgumentParser):
@@ -38,7 +36,7 @@ def init_continue_train_parser(parser: ArgumentParser):
 
 def continue_train_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  continue_training(**args)
+  continue_train(**args)
 
 
 def init_validate_generic_parser(parser: ArgumentParser):
@@ -59,7 +57,7 @@ def validate_generic_cli(**args):
   args["entry_ids"] = split_int_set_str(args["entry_ids"])
   args["custom_checkpoints"] = split_int_set_str(args["custom_checkpoints"])
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  app_validate_generic(**args)
+  validate_generic(**args)
 
 
 def init_validate_parser(parser: ArgumentParser):
@@ -79,7 +77,7 @@ def validate_cli(**args):
   args["entry_ids"] = split_int_set_str(args["entry_ids"])
   args["custom_checkpoints"] = split_int_set_str(args["custom_checkpoints"])
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  app_validate(**args)
+  validate(**args)
 
 
 def init_inference_parser(parser: ArgumentParser):
@@ -97,7 +95,7 @@ def init_inference_parser(parser: ArgumentParser):
 def infer_cli(**args):
   args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
   args["mel_paths"] = split_string(args["mel_paths"])
-  app_infer(**args)
+  infer(**args)
 
 
 def init_download_parser(parser: ArgumentParser):
