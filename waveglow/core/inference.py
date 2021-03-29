@@ -7,6 +7,7 @@ import imageio
 import numpy as np
 import torch
 from audio_utils import get_duration_s, normalize_wav
+from audio_utils.audio import concatenate_audios
 from audio_utils.mel import TacotronSTFT, plot_melspec_np
 from image_utils import (calculate_structual_similarity_np,
                          make_same_width_by_filling_white)
@@ -21,7 +22,6 @@ from waveglow.utils import GenericList, cosine_dist_mels
 @dataclass
 class InferenceEntry():
   nr: int = None
-  input_path: str = None
   denoising_duration_s: float = None
   was_overamplified: bool = None
   inferred_duration_s: float = None
@@ -29,6 +29,7 @@ class InferenceEntry():
   inference_duration_s: float = None
   timepoint: str = None
   sampling_rate: int = None
+  diff_frames: int = None
   mcd_dtw: float = None
   mcd_dtw_penalty: int = None
   mcd_dtw_frames: int = None
@@ -65,7 +66,7 @@ def mel_to_torch(mel: np.ndarray) -> np.ndarray:
   return res
 
 
-def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], logger: Logger) -> Tuple[np.ndarray, InferenceEntries]:
+def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
   inference_entries = InferenceEntries()
 
   if len(mels) == 0:
@@ -89,9 +90,18 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
     mel_var = mel_var.unsqueeze(0)
     mels_torch_prepared.append(mel_var)
 
-  complete_wav_denoised, inference_results = synth.infer_all(
-    mels_torch_prepared, sigma, denoiser_strength, sentence_pause_s)
-  complete_wav_denoised = normalize_wav(complete_wav_denoised)
+  inference_results = synth.infer_all(
+    mels_torch_prepared, sigma, denoiser_strength)
+
+  complete_wav_denoised: Optional[np.ndarray] = None
+  if concatenate:
+    if len(inference_results) >= 1:
+      logger.info("Concatening audios...")
+    complete_wav_denoised = concatenate_audios(
+      [x.wav_denoised for x in inference_results], sentence_pause_s, synth.hparams.sampling_rate)
+    complete_wav_denoised = normalize_wav(complete_wav_denoised)
+    if len(inference_results) >= 1:
+      logger.info("Done.")
 
   inference_result: InferenceResult
   for nr, mel_torch, inference_result in tqdm(zip(range(len(mels_torch)), mels_torch, inference_results)):
@@ -139,6 +149,7 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
       use_dtw=True,
     )
 
+    val_entry.diff_frames = mel_inferred_denoised.shape[1] - mel_orig.shape[1]
     val_entry.mcd_dtw = mcd_dtw
     val_entry.mcd_dtw_penalty = penalty_dtw
     val_entry.mcd_dtw_frames = final_frame_number_dtw
@@ -207,4 +218,4 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
     inference_entries.append(val_entry)
     #score, diff_img = compare_mels(a, b)
 
-  return complete_wav_denoised, inference_entries
+  return inference_entries, (complete_wav_denoised, synth.hparams.sampling_rate)

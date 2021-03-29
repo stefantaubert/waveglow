@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-from audio_utils import concatenate_audios, is_overamp, normalize_wav
+from audio_utils import is_overamp
 from tqdm import tqdm
 from waveglow.core.denoiser import Denoiser
 from waveglow.core.model_checkpoint import CheckpointWaveglow
@@ -48,14 +48,6 @@ class Synthesizer():
     self.model = model
     self.denoiser = denoiser
 
-  def _concatenate_wavs(self, result: List[InferenceResult], sentence_pause_s: float):
-    wavs = [res.wav for res in result]
-    if len(wavs) > 1:
-      self._logger.info("Concatening audios...")
-    output = concatenate_audios(wavs, sentence_pause_s, self.hparams.sampling_rate)
-
-    return output
-
   def infer(self, mel: torch.FloatTensor, sigma: float, denoiser_strength: float) -> InferenceResult:
     denoising_duration = 0
     start = time.perf_counter()
@@ -94,18 +86,11 @@ class Synthesizer():
 
     return res
 
-  def infer_all(self, mels: List[torch.FloatTensor], sigma: float, denoiser_strength: float, sentence_pause_s: float) -> Tuple[np.ndarray, List[InferenceResult]]:
+  def infer_all(self, mels: List[torch.FloatTensor], sigma: float, denoiser_strength: float) -> List[InferenceResult]:
     result: List[InferenceResult] = []
 
-    # Speed is: 1min inference for 3min wav result
     for mel in tqdm(mels):
       infer_res = self.infer(mel, sigma, denoiser_strength)
       result.append(infer_res)
 
-    output = self._concatenate_wavs(result, sentence_pause_s)
-    # output = normalize_wav(output)
-
-    # for infer_res in result:
-    #   infer_res.wav = normalize_wav(infer_res.wav)
-
-    return output, result
+    return result

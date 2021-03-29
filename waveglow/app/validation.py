@@ -8,8 +8,8 @@ import numpy as np
 from audio_utils import float_to_wav
 from image_utils import stack_images_vertically
 from tqdm import tqdm
-from tts_preparation import (PreparedData, get_merged_dir,
-                             get_prep_dir, load_testset, load_valset)
+from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
+                             load_testset, load_valset)
 from tts_preparation.app.prepare2 import load_totalset
 from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SIGMA
 from waveglow.app.io import (_get_validation_root_dir, get_checkpoints_dir,

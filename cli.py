@@ -89,6 +89,7 @@ def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--denoiser_strength', type=float, default=DEFAULT_DENOISER_STRENGTH)
   parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
   parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--no_concatenation', action="store_true")
   return infer_cli
 
 
@@ -97,6 +98,25 @@ def infer_cli(**args):
   args["mel_paths"] = split_string(args["mel_paths"])
   infer(**args)
 
+
+
+def init_inference_parse_txt_parser(parser: ArgumentParser):
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--mel_paths', type=str, required=True)
+  parser.add_argument('--sampling_rate', type=int, default=22050)
+  parser.add_argument('--custom_checkpoint', type=int)
+  parser.add_argument('--sigma', type=float, default=DEFAULT_SIGMA)
+  parser.add_argument('--denoiser_strength', type=float, default=DEFAULT_DENOISER_STRENGTH)
+  parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--no_concatenation', action="store_true")
+  return infer_parse_txt_cli
+
+
+def infer_parse_txt_cli(**args):
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  args["mel_paths"] = split_string(args["mel_paths"])
+  infer(**args)
 
 def init_download_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, default=DEFAULT_WAVEGLOW)

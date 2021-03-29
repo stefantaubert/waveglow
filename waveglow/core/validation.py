@@ -39,6 +39,7 @@ class ValidationEntry():
   timepoint: str = None
   train_name: str = None
   sampling_rate: int = None
+  diff_frames: int = None
   mcd_dtw: float = None
   mcd_dtw_penalty: int = None
   mcd_dtw_frames: int = None
@@ -157,6 +158,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
       use_dtw=True,
     )
 
+    val_entry.diff_frames = mel_inferred_denoised.shape[1] - mel_orig.shape[1]
     val_entry.mcd_dtw = mcd_dtw
     val_entry.mcd_dtw_penalty = penalty_dtw
     val_entry.mcd_dtw_frames = final_frame_number_dtw
