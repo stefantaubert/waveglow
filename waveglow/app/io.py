@@ -127,10 +127,6 @@ def get_inference_root_dir(train_dir: str):
   return get_subdir(train_dir, "inference", create=True)
 
 
-def get_infer_log(infer_dir: str):
-  return os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}.txt")
-
-
 def save_infer_wav(infer_dir: str, sampling_rate: int, wav: np.ndarray):
   path = os.path.join(infer_dir, f"{get_parent_dirname(infer_dir)}.wav")
   float_to_wav(wav, path, sample_rate=sampling_rate)

@@ -21,7 +21,7 @@ from waveglow.utils import GenericList, cosine_dist_mels
 
 @dataclass
 class InferenceEntry():
-  nr: int = None
+  identifier: str = None
   denoising_duration_s: float = None
   was_overamplified: bool = None
   inferred_duration_s: float = None
@@ -48,7 +48,7 @@ class InferenceEntries(GenericList[InferenceEntry]):
 
 @dataclass
 class InferenceEntryOutput():
-  nr: int = None
+  identifier: int = None
   mel_orig: np.ndarray = None
   mel_orig_img: np.ndarray = None
   orig_sr: int = None
@@ -66,10 +66,17 @@ def mel_to_torch(mel: np.ndarray) -> np.ndarray:
   return res
 
 
-def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
+@dataclass
+class InferMelEntry():
+  identifier: str
+  mel: np.ndarray
+  sr: int
+
+
+def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
   inference_entries = InferenceEntries()
 
-  if len(mels) == 0:
+  if len(mel_entries) == 0:
     logger.info("Nothing to synthesize!")
     return inference_entries
 
@@ -79,13 +86,17 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
     logger=logger
   )
 
+  # Check mels have the same sampling rate as trained waveglow model
+  for mel_entry in mel_entries:
+    assert mel_entry.sr == synth.hparams.sampling_rate
+
   taco_stft = TacotronSTFT(synth.hparams, logger=logger)
   mels_torch = []
   mels_torch_prepared = []
-  for mel in mels:
-    mel = mel_to_torch(mel)
-    mels_torch.append(mel)
-    mel_var = torch.autograd.Variable(mel)
+  for mel_entry in mel_entries:
+    mel_torch = mel_to_torch(mel_entry.mel)
+    mels_torch.append(mel_torch)
+    mel_var = torch.autograd.Variable(mel_torch)
     mel_var = mel_var.cuda()
     mel_var = mel_var.unsqueeze(0)
     mels_torch_prepared.append(mel_var)
@@ -104,12 +115,13 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
       logger.info("Done.")
 
   inference_result: InferenceResult
-  for nr, mel_torch, inference_result in tqdm(zip(range(len(mels_torch)), mels_torch, inference_results)):
+  mel_entry: InferMelEntry
+  for mel_entry, inference_result in tqdm(zip(mel_entries, inference_results)):
     wav_inferred_denoised = normalize_wav(inference_result.wav_denoised)
     timepoint = f"{datetime.datetime.now():%Y/%m/%d %H:%M:%S}"
 
     val_entry = InferenceEntry(
-      nr=nr,
+      identifier=mel_entry.identifier,
       iteration=checkpoint.iteration,
       timepoint=timepoint,
       sampling_rate=inference_result.sampling_rate,
@@ -122,19 +134,19 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
       sigma=sigma,
     )
 
-    mel_orig = mel_torch.cpu().numpy()
+    mel_orig = mel_entry.mel
 
     mel_inferred_denoised_tensor = torch.FloatTensor(inference_result.wav_denoised)
     mel_inferred_denoised = taco_stft.get_mel_tensor(mel_inferred_denoised_tensor)
     mel_inferred_denoised = mel_inferred_denoised.numpy()
 
     validation_entry_output = InferenceEntryOutput(
-      nr=nr,
+      identifier=mel_entry.identifier,
       mel_orig=mel_orig,
       inferred_sr=inference_result.sampling_rate,
       mel_inferred_denoised=mel_inferred_denoised,
       wav_inferred_denoised=wav_inferred_denoised,
-      orig_sr=sampling_rate,
+      orig_sr=mel_entry.sr,
       wav_inferred=normalize_wav(inference_result.wav),
       mel_denoised_diff_img=None,
       mel_inferred_denoised_img=None,
@@ -203,6 +215,7 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
     imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
+    logger.info(f"Current: {val_entry.identifier}")
     logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
     logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
     logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
@@ -216,6 +229,5 @@ def infer(mels: List[np.ndarray], sampling_rate: int, checkpoint: CheckpointWave
     logger.info(f"Cosine Similarity: {val_entry.cosine_similarity}")
     save_callback(validation_entry_output)
     inference_entries.append(val_entry)
-    #score, diff_img = compare_mels(a, b)
 
   return inference_entries, (complete_wav_denoised, synth.hparams.sampling_rate)

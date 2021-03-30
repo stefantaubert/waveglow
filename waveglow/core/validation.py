@@ -212,6 +212,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
+    logger.info(f"Current: {val_entry.entry_id}")
     logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
     logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
     logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
