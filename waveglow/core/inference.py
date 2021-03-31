@@ -117,7 +117,7 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
   inference_result: InferenceResult
   mel_entry: InferMelEntry
   for mel_entry, inference_result in tqdm(zip(mel_entries, inference_results)):
-    wav_inferred_denoised = normalize_wav(inference_result.wav_denoised)
+    wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
     timepoint = f"{datetime.datetime.now():%Y/%m/%d %H:%M:%S}"
 
     val_entry = InferenceEntry(
@@ -136,8 +136,8 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
 
     mel_orig = mel_entry.mel
 
-    mel_inferred_denoised_tensor = torch.FloatTensor(inference_result.wav_denoised)
-    mel_inferred_denoised = taco_stft.get_mel_tensor(mel_inferred_denoised_tensor)
+    wav_inferred_denoised_normalized_tensor = torch.FloatTensor(wav_inferred_denoised_normalized)
+    mel_inferred_denoised = taco_stft.get_mel_tensor(wav_inferred_denoised_normalized_tensor)
     mel_inferred_denoised = mel_inferred_denoised.numpy()
 
     validation_entry_output = InferenceEntryOutput(
@@ -145,7 +145,7 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
       mel_orig=mel_orig,
       inferred_sr=inference_result.sampling_rate,
       mel_inferred_denoised=mel_inferred_denoised,
-      wav_inferred_denoised=wav_inferred_denoised,
+      wav_inferred_denoised=wav_inferred_denoised_normalized,
       orig_sr=mel_entry.sr,
       wav_inferred=normalize_wav(inference_result.wav),
       mel_denoised_diff_img=None,
