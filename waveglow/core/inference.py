@@ -102,7 +102,7 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
     mels_torch_prepared.append(mel_var)
 
   inference_results = synth.infer_all(
-    mels_torch_prepared, sigma, denoiser_strength, seed=seed)  # TODO
+    mels_torch_prepared, sigma, denoiser_strength, seed=seed)
 
   complete_wav_denoised: Optional[np.ndarray] = None
   if concatenate:

@@ -88,6 +88,7 @@ class Synthesizer():
     return res
 
   def infer_all(self, mels: List[torch.FloatTensor], sigma: float, denoiser_strength: float, seed: int) -> List[InferenceResult]:
+    # TODO: remove method
     result: List[InferenceResult] = []
 
     for mel in tqdm(mels):
