@@ -16,7 +16,7 @@ from tts_preparation import PreparedData, PreparedDataList
 from waveglow.core.model_checkpoint import CheckpointWaveglow
 from waveglow.core.synthesizer import Synthesizer
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
-from waveglow.utils import GenericList, cosine_dist_mels
+from waveglow.utils import GenericList, cosine_dist_mels, init_global_seeds
 
 
 @dataclass
@@ -28,6 +28,7 @@ class ValidationEntry():
   wav_path: str = None
   denoising_duration_s: float = None
   was_overamplified: bool = None
+  seed: int = None
   original_duration_s: float = None
   inferred_duration_s: float = None
   diff_duration_s: float = None
@@ -70,7 +71,7 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_ids: Optional[Set[int]], train_name: str, full_run: bool, save_callback: Callable[[PreparedData, ValidationEntryOutput], None], logger: Logger):
+def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_ids: Optional[Set[int]], train_name: str, full_run: bool, save_callback: Callable[[PreparedData, ValidationEntryOutput], None], seed: int, logger: Logger):
   validation_entries = ValidationEntries()
 
   if full_run:
@@ -97,7 +98,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     mel_var = mel_var.cuda()
     mel_var = mel_var.unsqueeze(0)
 
-    inference_result = synth.infer(mel_var, sigma, denoiser_strength)
+    inference_result = synth.infer(mel_var, sigma, denoiser_strength, seed=seed)
     wav_inferred_denoised = normalize_wav(inference_result.wav_denoised)
 
     symbol_count = len(deserialize_list(entry.serialized_symbol_ids))
@@ -109,8 +110,9 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
       ds_entry_id=entry.ds_entry_id,
       text_original=entry.text_original,
       text=entry.text,
+      seed=seed,
       wav_path=entry.wav_path,
-      original_duration_s=entry.duration,
+      original_duration_s=entry.duration_s,
       speaker_id=entry.speaker_id,
       iteration=checkpoint.iteration,
       unique_symbols_count=unique_symbols_count,

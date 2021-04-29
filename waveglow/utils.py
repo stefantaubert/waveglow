@@ -82,6 +82,18 @@ def init_logger(logger: logging.Logger = get_default_logger()):
 
   return logger
 
+def init_global_seeds(seed: int) -> None:
+  # torch.backends.cudnn.deterministic = True
+  os.environ['PYTHONHASHSEED'] = str(seed)
+  random.seed(seed)
+  np.random.seed(seed)
+  torch.random.manual_seed(seed)
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed(seed)
+  # only on multi GPU
+  # torch.cuda.manual_seed_all(seed)
+
+
 
 def add_console_out_to_logger(logger: logging.Logger = get_default_logger()):
   console_handler = logging.StreamHandler()

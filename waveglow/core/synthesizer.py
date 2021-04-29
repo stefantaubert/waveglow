@@ -12,7 +12,7 @@ from tqdm import tqdm
 from waveglow.core.denoiser import Denoiser
 from waveglow.core.model_checkpoint import CheckpointWaveglow
 from waveglow.core.train import load_model
-from waveglow.utils import overwrite_custom_hparams
+from waveglow.utils import init_global_seeds, overwrite_custom_hparams
 
 
 @dataclass
@@ -48,7 +48,8 @@ class Synthesizer():
     self.model = model
     self.denoiser = denoiser
 
-  def infer(self, mel: torch.FloatTensor, sigma: float, denoiser_strength: float) -> InferenceResult:
+  def infer(self, mel: torch.FloatTensor, sigma: float, denoiser_strength: float, seed: int) -> InferenceResult:
+    init_global_seeds(seed)
     denoising_duration = 0
     start = time.perf_counter()
     with torch.no_grad():
@@ -86,11 +87,11 @@ class Synthesizer():
 
     return res
 
-  def infer_all(self, mels: List[torch.FloatTensor], sigma: float, denoiser_strength: float) -> List[InferenceResult]:
+  def infer_all(self, mels: List[torch.FloatTensor], sigma: float, denoiser_strength: float, seed: int) -> List[InferenceResult]:
     result: List[InferenceResult] = []
 
     for mel in tqdm(mels):
-      infer_res = self.infer(mel, sigma, denoiser_strength)
+      infer_res = self.infer(mel, sigma, denoiser_strength, seed)
       result.append(infer_res)
 
     return result

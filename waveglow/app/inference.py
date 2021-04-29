@@ -10,7 +10,7 @@ from audio_utils import float_to_wav
 from image_utils import stack_images_vertically
 from image_utils.main import stack_images_horizontally
 from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH,
-                                   DEFAULT_MEL_INFO_COPY_PATH,
+                                   DEFAULT_MEL_INFO_COPY_PATH, DEFAULT_SEED,
                                    DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA)
 from waveglow.app.io import (get_checkpoints_dir, get_inference_root_dir,
                              get_train_dir)
@@ -76,7 +76,7 @@ def mel_inferred_denoised_h_plot(infer_dir: str, sentences: InferenceEntries):
   stack_images_horizontally(paths, path)
 
 
-def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_MEL_INFO_COPY_PATH, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False):
+def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_MEL_INFO_COPY_PATH, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED):
   logger = getLogger(__name__)
   if not os.path.isfile(json_path):
     logger.info("Json file not found.")
@@ -120,10 +120,11 @@ def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_ME
     no_concatenation=no_concatenation,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
+    seed=seed,
   )
 
 
-def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False):
+def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -152,10 +153,11 @@ def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: i
     no_concatenation=no_concatenation,
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
+    seed=seed,
   )
 
 
-def _infer(infer_dir: str, checkpoint_path: str, mel_entries: List[InferMelEntry], sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False):
+def _infer(infer_dir: str, checkpoint_path: str, mel_entries: List[InferMelEntry], sigma: float, denoiser_strength: float, sentence_pause_s: Optional[float], custom_hparams: Optional[Dict[str, str]], no_concatenation: bool, seed: int):
   logger = prepare_logger(os.path.join(infer_dir, "log.txt"))
 
   checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
@@ -172,6 +174,7 @@ def _infer(infer_dir: str, checkpoint_path: str, mel_entries: List[InferMelEntry
     logger=logger,
     save_callback=save_callback,
     concatenate=concatenate,
+    seed=seed,
   )
 
   if concatenate:

@@ -6,7 +6,7 @@ from waveglow.app import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SENTENCE_PAUSE_S,
                           DEFAULT_WAVEGLOW_VERSION, continue_train,
                           dl_pretrained, infer, train, validate,
                           validate_generic)
-from waveglow.app.defaults import DEFAULT_MEL_INFO_COPY_PATH
+from waveglow.app.defaults import DEFAULT_MEL_INFO_COPY_PATH, DEFAULT_SEED
 from waveglow.app.inference import infer_parse_json
 from waveglow.utils import (split_hparams_string, split_int_set_str,
                             split_string)
@@ -44,6 +44,8 @@ def continue_train_cli(**args):
 def init_validate_generic_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, required=True)
   parser.add_argument('--ttsp_dir', type=str, required=True)
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
   parser.add_argument('--entry_ids', type=str, help="Utterance id or nothing if random")
   parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
                       choices=["val", "test", "total"], default="val")
@@ -52,6 +54,7 @@ def init_validate_generic_parser(parser: ArgumentParser):
                       type=float, help='Removes model bias.')
   parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
   parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
   return validate_generic_cli
 
 
@@ -72,6 +75,7 @@ def init_validate_parser(parser: ArgumentParser):
                       type=float, help='Removes model bias.')
   parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
   parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
   return validate_cli
 
 
@@ -91,6 +95,7 @@ def init_inference_parse_json_parser(parser: ArgumentParser):
   parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
   parser.add_argument('--custom_hparams', type=str)
   parser.add_argument('--no_concatenation', action="store_true")
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
   return infer_parse_json_cli
 
 
@@ -109,6 +114,7 @@ def init_inference_parser(parser: ArgumentParser):
   parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
   parser.add_argument('--custom_hparams', type=str)
   parser.add_argument('--no_concatenation', action="store_true")
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
   return infer_cli
 
 

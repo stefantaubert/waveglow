@@ -73,7 +73,7 @@ class InferMelEntry():
   sr: int
 
 
-def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
+def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
   inference_entries = InferenceEntries()
 
   if len(mel_entries) == 0:
@@ -102,7 +102,7 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
     mels_torch_prepared.append(mel_var)
 
   inference_results = synth.infer_all(
-    mels_torch_prepared, sigma, denoiser_strength)
+    mels_torch_prepared, sigma, denoiser_strength, seed=seed)  # TODO
 
   complete_wav_denoised: Optional[np.ndarray] = None
   if concatenate:

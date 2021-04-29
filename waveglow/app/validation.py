@@ -10,8 +10,8 @@ from image_utils import stack_images_vertically
 from tqdm import tqdm
 from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
                              load_testset, load_valset)
-from tts_preparation.app.prepare2 import load_totalset
-from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SIGMA
+from tts_preparation.app.prepare import load_totalset
+from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED, DEFAULT_SIGMA
 from waveglow.app.io import (_get_validation_root_dir, get_checkpoints_dir,
                              get_train_dir, load_prep_settings)
 from waveglow.core import (CheckpointWaveglow, ValidationEntries,
@@ -80,7 +80,7 @@ def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: st
   )
 
 
-def validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
+def validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -98,10 +98,11 @@ def validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: s
     custom_hparams=custom_hparams,
     full_run=full_run,
     ds=ds,
+    seed=seed,
   )
 
 
-def validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False):
+def validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -120,10 +121,11 @@ def validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = Non
     custom_hparams=custom_hparams,
     full_run=full_run,
     ds=ds,
+    seed=seed,
   )
 
 
-def _validate(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set[int]], custom_checkpoints: Optional[Set[int]], sigma: float, denoiser_strength: float, custom_hparams: Optional[Dict[str, str]], full_run: bool, ds: str):
+def _validate(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set[int]], custom_checkpoints: Optional[Set[int]], sigma: float, denoiser_strength: float, custom_hparams: Optional[Dict[str, str]], full_run: bool, ds: str, seed: int):
   if ds == "val":
     data = load_valset(prep_dir)
   elif ds == "test":
@@ -177,6 +179,7 @@ def _validate(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set
       logger=logger,
       sigma=sigma,
       denoiser_strength=denoiser_strength,
+      seed=seed,
     )
 
     result.extend(validation_entries)
