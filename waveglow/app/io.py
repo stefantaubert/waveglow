@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 from shutil import copyfile
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import imageio
 import matplotlib.pylab as plt
@@ -62,6 +62,25 @@ def get_train_checkpoints_log_file(logs_dir: str):
 def get_checkpoints_dir(train_dir: str):
   return get_subdir(train_dir, "checkpoints", create=True)
 
+
+def get_wav_info_dict(identifier: int, path: str, sr: int) -> Dict[str, Any]:
+  mel_info = {
+    "id": identifier,
+    "path": path,
+    "sr": sr,
+  }
+
+  return mel_info
+
+
+def get_wav_out_dict(name: str, root_dir: str, wav_info_dict: Dict[str, Any]) -> Dict[str, Any]:
+  info_json = {
+    "name": name,
+    "root_dir": root_dir,
+    "wavs": wav_info_dict,
+  }
+
+  return info_json
 
 # def save_trainset(train_dir: str, dataset: PreparedDataList):
 #   path = os.path.join(train_dir, _train_csv)

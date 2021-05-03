@@ -6,7 +6,7 @@ from waveglow.app import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SENTENCE_PAUSE_S,
                           DEFAULT_WAVEGLOW_VERSION, continue_train,
                           dl_pretrained, infer, train, validate,
                           validate_generic)
-from waveglow.app.defaults import DEFAULT_MEL_INFO_COPY_PATH, DEFAULT_SEED
+from waveglow.app.defaults import DEFAULT_READ_MEL_INFO_PATH, DEFAULT_SEED
 from waveglow.app.inference import infer_parse_json
 from waveglow.utils import (split_hparams_string, split_int_set_str,
                             split_string)
@@ -88,7 +88,7 @@ def validate_cli(**args):
 
 def init_inference_parse_json_parser(parser: ArgumentParser):
   parser.add_argument('--train_name', type=str, required=True)
-  parser.add_argument('--json_path', type=str, default=DEFAULT_MEL_INFO_COPY_PATH)
+  parser.add_argument('--json_path', type=str, default=DEFAULT_READ_MEL_INFO_PATH)
   parser.add_argument('--custom_checkpoint', type=int)
   parser.add_argument('--sigma', type=float, default=DEFAULT_SIGMA)
   parser.add_argument('--denoiser_strength', type=float, default=DEFAULT_DENOISER_STRENGTH)

@@ -2,7 +2,8 @@ import datetime
 import os
 from functools import partial
 from logging import getLogger
-from typing import Dict, List, Optional
+from shutil import copyfile
+from typing import Any, Dict, List, Optional
 
 import imageio
 import numpy as np
@@ -10,16 +11,22 @@ from audio_utils import float_to_wav
 from image_utils import stack_images_vertically
 from image_utils.main import stack_images_horizontally
 from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH,
-                                   DEFAULT_MEL_INFO_COPY_PATH, DEFAULT_SEED,
+                                   DEFAULT_READ_MEL_INFO_PATH,
+                                   DEFAULT_SAVE_WAV_INFO_COPY_PATH, DEFAULT_SEED,
                                    DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA)
 from waveglow.app.io import (get_checkpoints_dir, get_inference_root_dir,
-                             get_train_dir)
+                             get_train_dir, get_wav_info_dict,
+                             get_wav_out_dict)
 from waveglow.core import (CheckpointWaveglow, InferenceEntries,
                            InferenceEntryOutput)
 from waveglow.core import infer as infer_core
 from waveglow.core.inference import InferMelEntry
-from waveglow.utils import (get_custom_or_last_checkpoint, get_subdir,
-                            parse_json, pass_lines_list, prepare_logger)
+from waveglow.utils import (create_parent_folder,
+                            get_custom_or_last_checkpoint, get_subdir,
+                            parse_json, pass_lines_list, prepare_logger,
+                            save_json)
+
+OUTPUT_INFO_FILE_NAME = "wav_out.json"
 
 
 def get_infer_dir(train_dir: str, run_name: str) -> str:
@@ -32,7 +39,7 @@ def get_inferred_mel_dir(infer_dir: int, nr: int):
   return dest_dir
 
 
-def save_results(output: InferenceEntryOutput, infer_dir: str):
+def save_results(output: InferenceEntryOutput, infer_dir: str, denoised_audio_wav_paths: List[Dict[str, Any]]):
   dest_dir = get_inferred_mel_dir(infer_dir, output.identifier)
   os.makedirs(dest_dir, exist_ok=True)
   imageio.imsave(os.path.join(dest_dir, "original.png"), output.mel_orig_img)
@@ -41,8 +48,9 @@ def save_results(output: InferenceEntryOutput, infer_dir: str):
   np.save(os.path.join(dest_dir, "original.mel.npy"), output.mel_orig)
   np.save(os.path.join(dest_dir, "inferred_denoised.mel.npy"), output.mel_inferred_denoised)
 
-  float_to_wav(output.wav_inferred_denoised, os.path.join(
-    dest_dir, "inferred_denoised.wav"), sample_rate=output.inferred_sr)
+  inferred_denoised_path = os.path.join(
+    dest_dir, "inferred_denoised.wav")
+  float_to_wav(output.wav_inferred_denoised, inferred_denoised_path, sample_rate=output.inferred_sr)
 
   float_to_wav(output.wav_inferred, os.path.join(
     dest_dir, "inferred.wav"), sample_rate=output.inferred_sr)
@@ -55,6 +63,14 @@ def save_results(output: InferenceEntryOutput, infer_dir: str):
     ],
     out_path=os.path.join(dest_dir, "comparison.png")
   )
+
+  wav_info = get_wav_info_dict(
+    identifier=output.identifier,
+    path=inferred_denoised_path,
+    sr=output.inferred_sr,
+  )
+
+  denoised_audio_wav_paths.append(wav_info)
 
 
 def save_stats(infer_dir: str, stats: InferenceEntries) -> None:
@@ -76,7 +92,7 @@ def mel_inferred_denoised_h_plot(infer_dir: str, sentences: InferenceEntries):
   stack_images_horizontally(paths, path)
 
 
-def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_MEL_INFO_COPY_PATH, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED):
+def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_READ_MEL_INFO_PATH, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED, copy_wav_info_to: Optional[str] = DEFAULT_SAVE_WAV_INFO_COPY_PATH):
   logger = getLogger(__name__)
   if not os.path.isfile(json_path):
     logger.info("Json file not found.")
@@ -113,6 +129,7 @@ def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_ME
 
   _infer(
     infer_dir=infer_dir,
+    run_name=run_name,
     mel_entries=mel_entries,
     checkpoint_path=checkpoint_path,
     custom_hparams=custom_hparams,
@@ -121,10 +138,11 @@ def infer_parse_json(base_dir: str, train_name: str, json_path: str = DEFAULT_ME
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
     seed=seed,
+    copy_wav_info_to=copy_wav_info_to,
   )
 
 
-def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED):
+def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED, copy_wav_info_to: Optional[str] = DEFAULT_SAVE_WAV_INFO_COPY_PATH):
   train_dir = get_train_dir(base_dir, train_name, create=False)
   assert os.path.isdir(train_dir)
 
@@ -146,6 +164,7 @@ def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: i
 
   _infer(
     infer_dir=infer_dir,
+    run_name=run_name,
     mel_entries=mel_entries,
     checkpoint_path=checkpoint_path,
     custom_hparams=custom_hparams,
@@ -154,15 +173,22 @@ def infer(base_dir: str, train_name: str, mel_paths: List[str], sampling_rate: i
     sentence_pause_s=sentence_pause_s,
     sigma=sigma,
     seed=seed,
+    copy_wav_info_to=copy_wav_info_to,
   )
 
 
-def _infer(infer_dir: str, checkpoint_path: str, mel_entries: List[InferMelEntry], sigma: float, denoiser_strength: float, sentence_pause_s: Optional[float], custom_hparams: Optional[Dict[str, str]], no_concatenation: bool, seed: int):
+def _infer(infer_dir: str, run_name: str, checkpoint_path: str, mel_entries: List[InferMelEntry], sigma: float, denoiser_strength: float, sentence_pause_s: Optional[float], custom_hparams: Optional[Dict[str, str]], no_concatenation: bool, seed: int, copy_wav_info_to: Optional[str]):
   logger = prepare_logger(os.path.join(infer_dir, "log.txt"))
 
   checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
-  save_callback = partial(save_results, infer_dir=infer_dir)
   concatenate = not no_concatenation
+
+  denoised_audio_wav_paths: List[Dict[str, Any]] = []
+  save_callback = partial(
+    save_results,
+    infer_dir=infer_dir,
+    denoised_audio_wav_paths=denoised_audio_wav_paths
+  )
 
   inference_results, complete = infer_core(
     mel_entries=mel_entries,
@@ -193,6 +219,20 @@ def _infer(infer_dir: str, checkpoint_path: str, mel_entries: List[InferMelEntry
   logger.info("Creating total.csv")
   save_stats(infer_dir, inference_results)
 
+  wav_paths_json = save_denoised_audio_wav_paths(
+    infer_dir=infer_dir,
+    name=run_name,
+    denoised_audio_wav_paths=denoised_audio_wav_paths,
+  )
+
+  logger.info("Wrote all inferred mel paths including sampling rate into these file(s):")
+  logger.info(wav_paths_json)
+
+  if copy_wav_info_to is not None:
+    create_parent_folder(copy_wav_info_to)
+    copyfile(wav_paths_json, copy_wav_info_to)
+    logger.info(copy_wav_info_to)
+
   logger.info(f"Saved output to: {infer_dir}")
 
   # save_infer_wav(infer_dir, wav_sr, wav)
@@ -204,3 +244,17 @@ def _infer(infer_dir: str, checkpoint_path: str, mel_entries: List[InferMelEntry
 
   # logger.info(f"Imagescore: {score*100}%")
   # logger.info(f"Saved output to: {infer_dir}")
+
+
+def save_denoised_audio_wav_paths(infer_dir: str, name: str, denoised_audio_wav_paths: List[Dict[str, Any]]) -> str:
+  info_json = get_wav_out_dict(
+    name=name,
+    root_dir=infer_dir,
+    wav_info_dict=denoised_audio_wav_paths,
+  )
+
+  path = os.path.join(infer_dir, OUTPUT_INFO_FILE_NAME)
+  save_json(path, info_json)
+  #text = '\n'.join(mel_postnet_npy_paths)
+  #save_txt(path, text)
+  return path
