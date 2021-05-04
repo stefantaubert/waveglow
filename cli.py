@@ -55,6 +55,7 @@ def init_validate_generic_parser(parser: ArgumentParser):
   parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
   parser.add_argument('--custom_hparams', type=str)
   parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--full_run', action="store_true")
   return validate_generic_cli
 
 
@@ -76,6 +77,7 @@ def init_validate_parser(parser: ArgumentParser):
   parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
   parser.add_argument('--custom_hparams', type=str)
   parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--full_run', action="store_true")
   return validate_cli
 
 
