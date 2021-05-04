@@ -99,7 +99,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     mel_var = mel_var.unsqueeze(0)
 
     inference_result = synth.infer(mel_var, sigma, denoiser_strength, seed=seed)
-    wav_inferred_denoised = normalize_wav(inference_result.wav_denoised)
+    wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
     symbol_count = len(deserialize_list(entry.serialized_symbol_ids))
     unique_symbols_count = len(set(deserialize_list(entry.serialized_symbol_ids)))
@@ -133,7 +133,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
 
     mel_orig = mel.cpu().numpy()
 
-    mel_inferred_denoised_tensor = torch.FloatTensor(inference_result.wav_denoised)
+    mel_inferred_denoised_tensor = torch.FloatTensor(wav_inferred_denoised_normalized)
     mel_inferred_denoised = taco_stft.get_mel_tensor(mel_inferred_denoised_tensor)
     mel_inferred_denoised = mel_inferred_denoised.numpy()
 
@@ -143,7 +143,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
       mel_orig=mel_orig,
       inferred_sr=inference_result.sampling_rate,
       mel_inferred_denoised=mel_inferred_denoised,
-      wav_inferred_denoised=wav_inferred_denoised,
+      wav_inferred_denoised=wav_inferred_denoised_normalized,
       wav_orig=wav_orig,
       orig_sr=orig_sr,
       wav_inferred=normalize_wav(inference_result.wav),
