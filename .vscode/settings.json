@@ -16,7 +16,7 @@
   ],
   "editor.formatOnSave": true,
   "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.autoSearchPaths": false,
+  "python.analysis.autoSearchPaths": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
   },

@@ -29,15 +29,12 @@ Unidecode = "*"
 Pillow = "*"
 pysptk = "*"
 fastdtw = "*"
-cmudict-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/cmudict-parser.git"}
 text-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-utils.git"}
 audio-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/audio-utils.git"}
 image-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/image-utils.git"}
 speech-dataset-preprocessing = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-preprocessing.git"}
-speech-dataset-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-parser.git"}
 tts-preparation = {editable = true, ref = "master", git = "https://github.com/stefantaubert/tts-preparation.git"}
 mcd = {editable = true, ref = "main", git = "https://github.com/jasminsternkopf/mel_cepstral_distance.git"}
-text-selection = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-selection.git"}
 
 [requires]
 python_version = "3.8"
