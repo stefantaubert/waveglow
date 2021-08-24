@@ -7,13 +7,15 @@ from typing import Any, Dict, List, Optional
 
 import imageio
 import numpy as np
+import regex as re
 from audio_utils import float_to_wav
 from image_utils import stack_images_vertically
 from image_utils.main import stack_images_horizontally
 from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH,
                                    DEFAULT_READ_MEL_INFO_PATH,
-                                   DEFAULT_SAVE_WAV_INFO_COPY_PATH, DEFAULT_SEED,
-                                   DEFAULT_SENTENCE_PAUSE_S, DEFAULT_SIGMA)
+                                   DEFAULT_SAVE_WAV_INFO_COPY_PATH,
+                                   DEFAULT_SEED, DEFAULT_SENTENCE_PAUSE_S,
+                                   DEFAULT_SIGMA)
 from waveglow.app.io import (get_checkpoints_dir, get_inference_root_dir,
                              get_train_dir, get_wav_info_dict,
                              get_wav_out_dict)
@@ -48,9 +50,14 @@ def save_results(output: InferenceEntryOutput, infer_dir: str, denoised_audio_wa
   np.save(os.path.join(dest_dir, "original.mel.npy"), output.mel_orig)
   np.save(os.path.join(dest_dir, "inferred_denoised.mel.npy"), output.mel_inferred_denoised)
 
-  inferred_denoised_path = os.path.join(
-    dest_dir, "inferred_denoised.wav")
+  inferred_denoised_path = os.path.join(dest_dir, "inferred_denoised.wav")
   float_to_wav(output.wav_inferred_denoised, inferred_denoised_path, sample_rate=output.inferred_sr)
+
+  pat = re.compile("id=([0-9]*)_")
+  entry_id = re.findall(pat, output.identifier)
+  if len(entry_id) == 1:
+    inferred_denoised_path_copy = os.path.join(infer_dir, f"{entry_id[0]}.wav")
+    copyfile(inferred_denoised_path, inferred_denoised_path_copy)
 
   float_to_wav(output.wav_inferred, os.path.join(
     dest_dir, "inferred.wav"), sample_rate=output.inferred_sr)
