@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "61052bcc69819f57d953e649b05f335901f2ac38107b649eb6b0c1f0d56ab137"
+            "sha256": "670ad79f68df4c92a67b094ada15af66f56e9e86e46bfc73bc0c959a1e1ae09d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -492,7 +492,7 @@
         },
         "mcd": {
             "editable": true,
-            "path": "./../mcd"
+            "path": "./../mel_cepstral_distance"
         },
         "munkres": {
             "hashes": [
