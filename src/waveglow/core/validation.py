@@ -1,4 +1,5 @@
 import datetime
+import random
 from dataclasses import dataclass
 from logging import Logger
 from typing import Callable, Dict, Optional, Set
@@ -76,9 +77,17 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
 
   if full_run:
     entries = data
+  elif entry_ids is not None:
+    entries = PreparedDataList([x for x in data.items() if x.entry_id in entry_ids])
+    if len(entries) != len(entry_ids):
+      logger.error("Not all entry_id's were found!")
+      assert False
   else:
-    speaker_id: Optional[int] = None
-    entries = PreparedDataList(data.get_for_validation(entry_ids, speaker_id))
+    assert seed is not None
+    assert len(data) > 0
+    random.seed(seed)
+    entry = random.choice(data)
+    entries = PreparedDataList([entry])
 
   if len(entries) == 0:
     logger.info("Nothing to synthesize!")
@@ -93,7 +102,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
   taco_stft = TacotronSTFT(synth.hparams, logger=logger)
 
   for entry in entries.items(True):
-    mel = taco_stft.get_mel_tensor_from_file(entry.wav_path)
+    mel = taco_stft.get_mel_tensor_from_file(entry.wav_absolute_path)
     mel_var = torch.autograd.Variable(mel)
     mel_var = mel_var.cuda()
     mel_var = mel_var.unsqueeze(0)
@@ -101,18 +110,18 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     inference_result = synth.infer(mel_var, sigma, denoiser_strength, seed=seed)
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
-    symbol_count = len(deserialize_list(entry.serialized_symbol_ids))
-    unique_symbols_count = len(set(deserialize_list(entry.serialized_symbol_ids)))
+    symbol_count = len(entry.symbols)
+    unique_symbols_count = len(set(entry.symbols))
     timepoint = f"{datetime.datetime.now():%Y/%m/%d %H:%M:%S}"
 
     val_entry = ValidationEntry(
       entry_id=entry.entry_id,
       ds_entry_id=entry.ds_entry_id,
-      text_original=entry.text_original,
-      text=entry.text,
+      text_original=''.join(entry.symbols_original),
+      text=''.join(entry.symbols),
       seed=seed,
-      wav_path=entry.wav_path,
-      original_duration_s=entry.duration_s,
+      wav_path=entry.wav_absolute_path,
+      original_duration_s=entry.wav_duration,
       speaker_id=entry.speaker_id,
       iteration=checkpoint.iteration,
       unique_symbols_count=unique_symbols_count,
@@ -137,7 +146,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     mel_inferred_denoised = taco_stft.get_mel_tensor(mel_inferred_denoised_tensor)
     mel_inferred_denoised = mel_inferred_denoised.numpy()
 
-    wav_orig, orig_sr = wav_to_float32(entry.wav_path)
+    wav_orig, orig_sr = wav_to_float32(entry.wav_absolute_path)
 
     validation_entry_output = ValidationEntryOutput(
       mel_orig=mel_orig,

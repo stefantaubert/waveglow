@@ -27,7 +27,7 @@ class MelLoader(Dataset):
 
     wav_paths = {}
     for i, values in enumerate(data.items()):
-      wav_paths[i] = values.wav_path
+      wav_paths[i] = values.wav_absolute_path
     self.wav_paths = wav_paths
 
     if hparams.cache_wavs:
@@ -60,7 +60,7 @@ def parse_batch(batch) -> Tuple[torch.autograd.Variable, torch.autograd.Variable
 
 def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Logger):
   logger.info(
-    f"Duration trainset {trainset.get_total_duration_s() / 60:.2f}m / {trainset.get_total_duration_s() / 60 / 60:.2f}h")
+    f"Duration trainset {trainset.total_duration_s / 60:.2f}m / {trainset.total_duration_s / 60 / 60:.2f}h")
 
   trn = MelLoader(trainset, hparams, logger)
 
@@ -82,7 +82,7 @@ def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Lo
 
 def prepare_valloader(hparams: HParams, valset: PreparedDataList, logger: Logger):
   logger.info(
-    f"Duration valset {valset.get_total_duration_s() / 60:.2f}m / {valset.get_total_duration_s() / 60 / 60:.2f}h")
+    f"Duration valset {valset.total_duration_s / 60:.2f}m / {valset.total_duration_s / 60 / 60:.2f}h")
 
   val = MelLoader(valset, hparams, logger)
   val_sampler = None

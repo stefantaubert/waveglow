@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+from pathlib import Path
 from shutil import copyfile
 from typing import Any, Dict, Optional, Tuple
 
@@ -112,15 +113,15 @@ def get_wav_out_dict(name: str, root_dir: str, wav_info_dict: Dict[str, Any]) ->
 #   return PreparedDataList.load(PreparedData, path)
 
 
-def load_prep_settings(train_dir: str) -> Tuple[str, str]:
+def load_prep_settings(train_dir: str) -> Tuple[Path, str, str]:
   path = os.path.join(train_dir, _settings_json)
   res = parse_json(path)
-  return res["ttsp_dir"], res["merge_name"], res["prep_name"]
+  return Path(res["ttsp_dir"]), res["merge_name"], res["prep_name"]
 
 
-def save_prep_settings(train_dir: str, ttsp_dir: str, merge_name: Optional[str], prep_name: Optional[str]):
+def save_prep_settings(train_dir: str, ttsp_dir: Path, merge_name: Optional[str], prep_name: Optional[str]):
   settings = {
-    "ttsp_dir": ttsp_dir,
+    "ttsp_dir": str(ttsp_dir),
     "merge_name": merge_name,
     "prep_name": prep_name,
   }
