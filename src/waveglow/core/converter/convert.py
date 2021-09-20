@@ -29,7 +29,7 @@ def convert_glow(origin: str, destination: str, keep_orig: bool = False) -> Chec
 
 def _convert_core(source: str, destination: str) -> CheckpointWaveglow:
   '''in version 3 there is only "model"'''
-  assert os.path.isfile(source)
+  assert source.is_file()
   logger = logging.getLogger(__name__)
   # torch.nn.Module.dump_patches = True
   rel_converter_location = str(pathlib.Path(__file__).parent.absolute())

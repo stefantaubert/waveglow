@@ -34,12 +34,13 @@ class Checkpoint():
 
   @classmethod
   def load(cls, checkpoint_path: str, logger: Logger):
-    assert os.path.isfile(checkpoint_path)
+    assert checkpoint_path.is_file()
     logger.info(f"Loading model '{checkpoint_path}'...")
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     result = cls(**checkpoint_dict)
     logger.info(f"Loaded model at iteration {result.iteration}.")
     return result
+
 
 def get_iteration(checkpoint: Optional[Checkpoint]) -> int:
   return checkpoint.iteration if checkpoint is not None else 0

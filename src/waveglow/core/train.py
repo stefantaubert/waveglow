@@ -169,7 +169,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
 
   # Get shared output_directory ready
   # if rank == 0:
-  #   if not os.path.isdir(output_directory):
+  #   if not output_directory.is_dir():
   #     os.makedirs(output_directory)
   #     os.chmod(output_directory, 0o775)
   #   print("output directory", output_directory)

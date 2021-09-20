@@ -8,11 +8,11 @@ from waveglow.core import convert_glow, dl_wg
 from waveglow.utils import get_pytorch_filename
 
 
-def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION):
+def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION) -> None:
   train_dir = get_train_dir(base_dir, train_name, create=True)
-  assert os.path.isdir(train_dir)
+  assert train_dir.is_dir()
   checkpoints_dir = get_checkpoints_dir(train_dir)
-  tmp_dest_path = os.path.join(checkpoints_dir, get_pytorch_filename("1"))
+  tmp_dest_path = checkpoints_dir / get_pytorch_filename("1")
 
   dl_wg(
     destination=tmp_dest_path,
@@ -25,7 +25,7 @@ def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, version: in
     keep_orig=False
   )
 
-  final_dest_path = os.path.join(checkpoints_dir, get_pytorch_filename(checkpoint.iteration))
+  final_dest_path = checkpoints_dir / get_pytorch_filename(checkpoint.iteration)
   if tmp_dest_path != final_dest_path:
     shutil.move(tmp_dest_path, final_dest_path)
 

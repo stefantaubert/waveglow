@@ -11,7 +11,8 @@ from tqdm import tqdm
 from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
                              load_testset, load_valset)
 from tts_preparation.app.prepare import load_totalset
-from waveglow.app.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED, DEFAULT_SIGMA
+from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
+                                   DEFAULT_SIGMA)
 from waveglow.app.io import (_get_validation_root_dir, get_checkpoints_dir,
                              get_train_dir, load_prep_settings)
 from waveglow.core import (CheckpointWaveglow, ValidationEntries,
@@ -50,17 +51,17 @@ def get_val_entry_dir(val_dir: str, entry: PreparedData, iteration: int) -> None
 
 
 def save_stats(val_dir: str, validation_entries: ValidationEntries) -> None:
-  path = os.path.join(val_dir, "total.csv")
+  path = val_dir / "total.csv"
   validation_entries.save(path, header=True)
 
 
 def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: str, iteration: int):
   dest_dir = get_val_entry_dir(val_dir, entry, iteration)
-  imageio.imsave(os.path.join(dest_dir, "original.png"), output.mel_orig_img)
-  imageio.imsave(os.path.join(dest_dir, "inferred_denoised.png"), output.mel_inferred_denoised_img)
-  imageio.imsave(os.path.join(dest_dir, "diff.png"), output.mel_denoised_diff_img)
-  np.save(os.path.join(dest_dir, "original.mel.npy"), output.mel_orig)
-  np.save(os.path.join(dest_dir, "inferred_denoised.mel.npy"), output.mel_inferred_denoised)
+  imageio.imsave(dest_dir / "original.png", output.mel_orig_img)
+  imageio.imsave(dest_dir / "inferred_denoised.png", output.mel_inferred_denoised_img)
+  imageio.imsave(dest_dir / "diff.png", output.mel_denoised_diff_img)
+  np.save(dest_dir / "original.mel.npy", output.mel_orig)
+  np.save(dest_dir / "inferred_denoised.mel.npy", output.mel_inferred_denoised)
   float_to_wav(output.wav_orig, os.path.join(
     dest_dir, "original.wav"), sample_rate=output.orig_sr)
 
@@ -72,17 +73,17 @@ def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: st
 
   stack_images_vertically(
     list_im=[
-      os.path.join(dest_dir, "original.png"),
-      os.path.join(dest_dir, "inferred_denoised.png"),
-      os.path.join(dest_dir, "diff.png"),
+      dest_dir / "original.png",
+      dest_dir / "inferred_denoised.png",
+      dest_dir / "diff.png",
     ],
-    out_path=os.path.join(dest_dir, "comparison.png")
+    out_path=dest_dir / "comparison.png"
   )
 
 
 def validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED):
   train_dir = get_train_dir(base_dir, train_name, create=False)
-  assert os.path.isdir(train_dir)
+  assert train_dir.is_dir()
 
   merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
@@ -104,7 +105,7 @@ def validate_generic(base_dir: str, ttsp_dir: str, merge_name: str, prep_name: s
 
 def validate(base_dir: str, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED):
   train_dir = get_train_dir(base_dir, train_name, create=False)
-  assert os.path.isdir(train_dir)
+  assert train_dir.is_dir()
 
   ttsp_dir, merge_name, prep_name = load_prep_settings(train_dir)
   merge_dir = get_merged_dir(ttsp_dir, merge_name, create=False)
@@ -155,7 +156,7 @@ def _validate(train_dir, train_name: str, prep_dir: str, entry_ids: Optional[Set
     iterations=iterations,
   )
 
-  val_log_path = os.path.join(val_dir, "log.txt")
+  val_log_path = val_dir / "log.txt"
   logger = prepare_logger(val_log_path)
   logger.info("Validating...")
   logger.info(f"Checkpoints: {','.join(str(x) for x in sorted(iterations))}")

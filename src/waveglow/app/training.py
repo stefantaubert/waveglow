@@ -62,7 +62,7 @@ def train(base_dir: str, ttsp_dir: str, train_name: str, merge_name: str, prep_n
 
 def continue_train(base_dir: str, train_name: str, custom_hparams: Optional[Dict[str, str]] = None):
   train_dir = get_train_dir(base_dir, train_name, create=False)
-  assert os.path.isdir(train_dir)
+  assert train_dir.is_dir()
 
   logs_dir = get_train_logs_dir(train_dir)
   logger = prepare_logger(get_train_log_file(logs_dir))
