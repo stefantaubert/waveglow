@@ -1,14 +1,15 @@
-from general_utils import disable_matplot_logger, disable_numba_logger
 import logging
 import os
 import random
 from dataclasses import asdict, dataclass
 from logging import Logger
 from math import floor
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import torch
+from general_utils import disable_matplot_logger, disable_numba_logger
 from general_utils.main import get_filenames
 from matplotlib.figure import Figure
 from scipy.spatial.distance import cosine
@@ -32,7 +33,7 @@ def get_default_logger():
   return logging.getLogger("default")
 
 
-def prepare_logger(log_file_path: Optional[str] = None, reset: bool = False, logger: Logger = get_default_logger()):
+def prepare_logger(log_file_path: Optional[str] = None, reset: bool = False, logger: Logger = get_default_logger()) -> None:
   init_logger(logger)
   add_console_out_to_logger(logger)
   if log_file_path is not None:
@@ -42,7 +43,7 @@ def prepare_logger(log_file_path: Optional[str] = None, reset: bool = False, log
   return logger
 
 
-def init_logger(logger: logging.Logger = get_default_logger()):
+def init_logger(logger: logging.Logger = get_default_logger()) -> None:
   root_logger = logging.getLogger()
   root_logger.setLevel(logging.DEBUG)
   # disable is required (don't know why) because otherwise DEBUG messages would be ignored!
@@ -75,7 +76,7 @@ def init_global_seeds(seed: int) -> None:
   # torch.cuda.manual_seed_all(seed)
 
 
-def add_console_out_to_logger(logger: logging.Logger = get_default_logger()):
+def add_console_out_to_logger(logger: logging.Logger = get_default_logger()) -> None:
   console_handler = logging.StreamHandler()
   console_handler.setLevel(logging.NOTSET)
   console_handler.setFormatter(formatter)
@@ -83,7 +84,7 @@ def add_console_out_to_logger(logger: logging.Logger = get_default_logger()):
   logger.debug("init console logger")
 
 
-def add_file_out_to_logger(logger: logging.Logger = get_default_logger(), log_file_path: str = "/tmp/log.txt"):
+def add_file_out_to_logger(logger: logging.Logger = get_default_logger(), log_file_path: str = "/tmp/log.txt") -> None:
   fh = logging.FileHandler(log_file_path)
   fh.setLevel(logging.INFO)
   fh.setFormatter(formatter)
@@ -91,12 +92,12 @@ def add_file_out_to_logger(logger: logging.Logger = get_default_logger(), log_fi
   logger.debug(f"init logger to {log_file_path}")
 
 
-def reset_file_log(log_file_path: str):
+def reset_file_log(log_file_path: str) -> None:
   if log_file_path.is_file():
     os.remove(log_file_path)
 
 
-def get_last_checkpoint(checkpoint_dir: str) -> Tuple[str, int]:
+def get_last_checkpoint(checkpoint_dir: Path) -> Tuple[str, int]:
   '''
   Returns the full path of the last checkpoint and its iteration.
   '''
@@ -111,7 +112,7 @@ def get_last_checkpoint(checkpoint_dir: str) -> Tuple[str, int]:
   return checkpoint_path, last_iteration
 
 
-def get_all_checkpoint_iterations(checkpoint_dir: str) -> List[int]:
+def get_all_checkpoint_iterations(checkpoint_dir: Path) -> List[int]:
   filenames = get_filenames(checkpoint_dir)
   checkpoints_str = [get_pytorch_basename(x)
                      for x in filenames if is_pytorch_file(x)]
@@ -119,43 +120,42 @@ def get_all_checkpoint_iterations(checkpoint_dir: str) -> List[int]:
   return checkpoints
 
 
-def get_checkpoint(checkpoint_dir: str, iteration: int) -> str:
-  checkpoint_path = os.path.join(
-    checkpoint_dir, get_pytorch_filename(iteration))
+def get_checkpoint(checkpoint_dir: Path, iteration: int) -> str:
+  checkpoint_path = checkpoint_dir / get_pytorch_filename(iteration)
   if not checkpoint_path.is_file():
     raise Exception(f"Checkpoint with iteration {iteration} not found!")
   return checkpoint_path
 
 
-def get_custom_or_last_checkpoint(checkpoint_dir: str, custom_iteration: Optional[int]) -> Tuple[str, int]:
+def get_custom_or_last_checkpoint(checkpoint_dir: Path, custom_iteration: Optional[int]) -> Tuple[str, int]:
   return (get_checkpoint(checkpoint_dir, custom_iteration), custom_iteration) if custom_iteration is not None else get_last_checkpoint(checkpoint_dir)
 
 
-def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float):
+def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float) -> None:
   for param_group in optimizer.param_groups:
     param_group['lr'] = learning_rate
 
 
-def get_mask_from_lengths(lengths):
+def get_mask_from_lengths(lengths) -> None:
   max_len = torch.max(lengths).item()
   ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
   mask = (ids < lengths.unsqueeze(1)).bool()
   return mask
 
 
-def copy_state_dict(state_dict: Dict[str, Tensor], to_model: nn.Module, ignore: List[str]):
+def copy_state_dict(state_dict: Dict[str, Tensor], to_model: nn.Module, ignore: List[str]) -> None:
   # TODO: ignore as set
   model_dict = {k: v for k, v in state_dict.items() if k not in ignore}
   update_state_dict(to_model, model_dict)
 
 
-def update_state_dict(model: nn.Module, updates: Dict[str, Tensor]):
+def update_state_dict(model: nn.Module, updates: Dict[str, Tensor]) -> None:
   dummy_dict = model.state_dict()
   dummy_dict.update(updates)
   model.load_state_dict(dummy_dict)
 
 
-def log_hparams(hparams: _T, logger: Logger):
+def log_hparams(hparams: _T, logger: Logger) -> None:
   logger.info("=== HParams ===")
   for param, val in asdict(hparams).items():
     logger.info(f"- {param} = {val}")
@@ -250,7 +250,7 @@ def check_is_save_epoch(epoch: int, epochs_per_checkpoint: int) -> bool:
   return save_epochs and ((epoch + 1) % epochs_per_checkpoint == 0)
 
 
-def check_is_last_batch_iteration(iteration: int, batch_iterations: int):
+def check_is_last_batch_iteration(iteration: int, batch_iterations: int) -> None:
   assert iteration >= 0
   assert batch_iterations > 0
   if iteration == 0:
@@ -264,7 +264,7 @@ def get_continue_epoch(current_iteration: int, batch_iterations: int) -> int:
   return iteration_to_epoch(current_iteration + 1, batch_iterations)
 
 
-def skip_batch(continue_batch_iteration: int, batch_iteration: int):
+def skip_batch(continue_batch_iteration: int, batch_iteration: int) -> None:
   result = batch_iteration < continue_batch_iteration
   return result
 
@@ -306,16 +306,16 @@ def filter_checkpoints(iterations: List[int], select: Optional[int], min_it: Opt
   return process_checkpoints
 
 
-def init_torch_seed(seed: int):
+def init_torch_seed(seed: int) -> None:
   torch.manual_seed(seed)
   torch.cuda.manual_seed(seed)
 
 
-def init_cuddn(enabled: bool):
+def init_cuddn(enabled: bool) -> None:
   torch.backends.cudnn.enabled = enabled
 
 
-def init_cuddn_benchmark(enabled: bool):
+def init_cuddn_benchmark(enabled: bool) -> None:
   torch.backends.cudnn.benchmark = enabled
 
 
@@ -323,11 +323,11 @@ def get_pytorch_filename(name: Union[str, int]) -> str:
   return f"{name}{PYTORCH_EXT}"
 
 
-def get_pytorch_basename(filename: str):
+def get_pytorch_basename(filename: str) -> None:
   return filename[:-len(PYTORCH_EXT)]
 
 
-def is_pytorch_file(filename: str):
+def is_pytorch_file(filename: str) -> None:
   return filename.endswith(PYTORCH_EXT)
 
 

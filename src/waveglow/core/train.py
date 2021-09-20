@@ -1,10 +1,12 @@
 import os
 import time
 from logging import Logger
+from pathlib import Path
 from typing import Dict, Iterator, List, Optional
 
 import numpy as np
 import torch
+from general_utils import overwrite_custom_hparams
 from torch import nn
 from torch.nn import Parameter
 from torch.utils.data import DataLoader
@@ -22,8 +24,7 @@ from waveglow.utils import (SaveIterationSettings, check_save_it,
                             get_continue_epoch, get_formatted_current_total,
                             get_last_checkpoint, get_pytorch_filename,
                             init_cuddn, init_cuddn_benchmark, init_torch_seed,
-                            log_hparams, overwrite_custom_hparams, skip_batch,
-                            validate_model)
+                            log_hparams, skip_batch, validate_model)
 
 
 class WaveGlowLoss(torch.nn.Module):
@@ -58,7 +59,7 @@ def load_model(hparams: HParams, state_dict: Optional[dict]) -> WaveGlow:
   return model
 
 
-def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, iteration, wg_logger: WaveglowLogger, logger: Logger):
+def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, iteration, wg_logger: WaveglowLogger, logger: Logger) -> None:
   logger.debug("Validating...")
   avg_val_loss, res = validate_model(model, criterion, val_loader, parse_batch)
   logger.info(f"Validation loss {iteration}: {avg_val_loss:9f}")
@@ -75,7 +76,7 @@ def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, ite
   return avg_val_loss
 
 
-def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger):
+def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: Path, debug_logger) -> None:
   debug_logger.info("Continuing training...")
   last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
 
@@ -91,7 +92,7 @@ def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: str, trains
   )
 
 
-def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, debug_logger: Logger, warm_model: Optional[CheckpointWaveglow]):
+def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: Path, debug_logger: Logger, warm_model: Optional[CheckpointWaveglow]) -> None:
   debug_logger.info("Starting new training...")
 
   _train(
@@ -106,13 +107,13 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prepa
   )
 
 
-def init_torch(hparams: ExperimentHParams):
+def init_torch(hparams: ExperimentHParams) -> None:
   init_torch_seed(hparams.seed)
   init_cuddn(hparams.cudnn_enabled)
   init_cuddn_benchmark(hparams.cudnn_benchmark)
 
 
-def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow):
+def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow) -> None:
   copy_state_dict(
     state_dict=warm_model.state_dict,
     to_model=model,
@@ -120,7 +121,7 @@ def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow):
   )
 
 
-def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: str, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow]):
+def _train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow]) -> None:
   complete_start = time.time()
   wg_logger = WaveglowLogger(logdir)
 
@@ -257,8 +258,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: str, trainset: Prep
           iteration=iteration,
         )
 
-        checkpoint_path = os.path.join(
-          save_checkpoint_dir, get_pytorch_filename(iteration))
+        checkpoint_path = save_checkpoint_dir / get_pytorch_filename(iteration)
         checkpoint.save(checkpoint_path, logger)
 
         validate(model, criterion, val_loader, iteration, wg_logger, logger)
@@ -279,7 +279,7 @@ def load_optimizer(model_parameters: Iterator[Parameter], hparams: OptimizerHPar
   return optimizer
 
 
-def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], logger: Logger):
+def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], logger: Logger) -> None:
   model = load_model(
     hparams=hparams,
     state_dict=checkpoint.state_dict if checkpoint is not None else None,

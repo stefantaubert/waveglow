@@ -1,11 +1,9 @@
-import os
 from dataclasses import asdict, dataclass
 from logging import Logger
 from typing import Optional, Type, TypeVar
 
 import torch
-
-from waveglow.utils import get_dataclass_from_dict
+from general_utils.main import get_dataclass_from_dict
 
 _HParamsType = TypeVar("_HParamsType")
 

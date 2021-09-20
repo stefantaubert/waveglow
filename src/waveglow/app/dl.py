@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import shutil
 from logging import getLogger
 
@@ -8,7 +8,7 @@ from waveglow.core import convert_glow, dl_wg
 from waveglow.utils import get_pytorch_filename
 
 
-def dl_pretrained(base_dir: str, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION) -> None:
+def dl_pretrained(base_dir: Path, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION) -> None:
   train_dir = get_train_dir(base_dir, train_name, create=True)
   assert train_dir.is_dir()
   checkpoints_dir = get_checkpoints_dir(train_dir)

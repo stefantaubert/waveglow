@@ -2,6 +2,7 @@ import datetime
 from dataclasses import dataclass
 from logging import Logger
 from typing import Callable, Dict, List, Optional, Tuple
+from general_utils.generic_list import GenericList
 
 import imageio
 import numpy as np
@@ -16,7 +17,7 @@ from tqdm import tqdm
 from waveglow.core.model_checkpoint import CheckpointWaveglow
 from waveglow.core.synthesizer import InferenceResult, Synthesizer
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
-from waveglow.utils import GenericList, cosine_dist_mels
+from waveglow.utils import cosine_dist_mels
 
 
 @dataclass

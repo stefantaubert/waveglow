@@ -8,7 +8,7 @@ from waveglow.core.hparams import HParams
 
 
 @torch.jit.script
-def fused_add_tanh_sigmoid_multiply(input_a, input_b, n_channels):
+def fused_add_tanh_sigmoid_multiply(input_a, input_b, n_channels) -> None:
   n_channels_int = n_channels[0]
   in_act = input_a + input_b
   t_act = torch.tanh(in_act[:, :n_channels_int, :])
@@ -270,7 +270,7 @@ class WaveGlow(torch.nn.Module):
     return waveglow
 
 
-def remove(conv_list):
+def remove(conv_list) -> None:
   new_conv_list = torch.nn.ModuleList()
   for old_conv in conv_list:
     old_conv = torch.nn.utils.remove_weight_norm(old_conv)

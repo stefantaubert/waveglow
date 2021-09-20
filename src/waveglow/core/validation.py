@@ -2,6 +2,7 @@ import datetime
 import random
 from dataclasses import dataclass
 from logging import Logger
+from pathlib import Path
 from typing import Callable, Dict, Optional, Set
 
 import imageio
@@ -9,15 +10,15 @@ import numpy as np
 import torch
 from audio_utils import get_duration_s, normalize_wav, wav_to_float32
 from audio_utils.mel import TacotronSTFT, plot_melspec_np
+from general_utils import GenericList
 from image_utils import (calculate_structual_similarity_np,
                          make_same_width_by_filling_white)
 from mcd import get_mcd_between_mel_spectograms
-from text_utils import deserialize_list
 from tts_preparation import PreparedData, PreparedDataList
 from waveglow.core.model_checkpoint import CheckpointWaveglow
 from waveglow.core.synthesizer import Synthesizer
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
-from waveglow.utils import GenericList, cosine_dist_mels, init_global_seeds
+from waveglow.utils import cosine_dist_mels
 
 
 @dataclass
@@ -72,7 +73,7 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_ids: Optional[Set[int]], train_name: str, full_run: bool, save_callback: Callable[[PreparedData, ValidationEntryOutput], None], seed: int, logger: Logger):
+def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_ids: Optional[Set[int]], train_name: str, full_run: bool, save_callback: Callable[[PreparedData, ValidationEntryOutput], None], seed: int, logger: Logger) -> None:
   validation_entries = ValidationEntries()
 
   if full_run:
@@ -218,9 +219,10 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     )
     validation_entry_output.mel_denoised_diff_img = mel_denoised_diff_img
 
-    imageio.imsave("/tmp/mel_original_img_raw.png", mel_original_img_raw)
-    imageio.imsave("/tmp/mel_inferred_img_raw.png", mel_inferred_denoised_img_raw)
-    imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
+    imageio.imsave(Path("/tmp/mel_original_img_raw.png"), mel_original_img_raw)
+    imageio.imsave(Path("/tmp/mel_inferred_img_raw.png"), mel_inferred_denoised_img_raw)
+    imageio.imsave(Path("/tmp/mel_difference_denoised_img_raw.png"),
+                   mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
     logger.info(f"Current: {val_entry.entry_id}")

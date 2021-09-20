@@ -58,7 +58,7 @@ def parse_batch(batch) -> Tuple[torch.autograd.Variable, torch.autograd.Variable
   return (mel, audio), (mel, audio)
 
 
-def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Logger):
+def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Logger) -> None:
   logger.info(
     f"Duration trainset {trainset.total_duration_s / 60:.2f}m / {trainset.total_duration_s / 60 / 60:.2f}h")
 
@@ -80,7 +80,7 @@ def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Lo
   return train_loader
 
 
-def prepare_valloader(hparams: HParams, valset: PreparedDataList, logger: Logger):
+def prepare_valloader(hparams: HParams, valset: PreparedDataList, logger: Logger) -> None:
   logger.info(
     f"Duration valset {valset.total_duration_s / 60:.2f}m / {valset.total_duration_s / 60 / 60:.2f}h")
 
