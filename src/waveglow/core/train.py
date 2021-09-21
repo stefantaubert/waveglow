@@ -258,6 +258,7 @@ def _train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Pre
           iteration=iteration,
         )
 
+        save_checkpoint_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = save_checkpoint_dir / get_pytorch_filename(iteration)
         checkpoint.save(checkpoint_path, logger)
 

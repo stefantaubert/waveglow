@@ -63,10 +63,10 @@ def get_checkpoints_dir(train_dir: Path) -> Path:
   return train_dir / "checkpoints"
 
 
-def get_wav_info_dict(identifier: int, path: str, sr: int) -> Dict[str, Any]:
+def get_wav_info_dict(identifier: int, path: Path, sr: int) -> Dict[str, Any]:
   mel_info = {
     "id": identifier,
-    "path": path,
+    "path": str(path),
     "sr": sr,
   }
 
@@ -76,7 +76,7 @@ def get_wav_info_dict(identifier: int, path: str, sr: int) -> Dict[str, Any]:
 def get_wav_out_dict(name: str, root_dir: Path, wav_info_dict: Dict[str, Any]) -> Dict[str, Any]:
   info_json = {
     "name": name,
-    "root_dir": root_dir,
+    "root_dir": str(root_dir),
     "wavs": wav_info_dict,
   }
 
@@ -214,7 +214,7 @@ def get_val_orig_wav_path(val_dir: Path) -> Path:
   return path
 
 
-def save_val_orig_wav(val_dir: Path, wav_path: str) -> None:
+def save_val_orig_wav(val_dir: Path, wav_path: Path) -> None:
   path = get_val_orig_wav_path(val_dir)
   copyfile(wav_path, path)
 

@@ -1,5 +1,6 @@
 # For copyright see LICENCE
 
+import datetime
 import logging
 import time
 from dataclasses import dataclass
@@ -24,6 +25,7 @@ class InferenceResult():
   inference_duration_s: float
   denoising_duration_s: float
   was_overamplified: bool
+  timepoint: datetime.datetime
 
 
 class Synthesizer():
@@ -50,6 +52,7 @@ class Synthesizer():
     self.denoiser = denoiser
 
   def infer(self, mel: torch.FloatTensor, sigma: float, denoiser_strength: float, seed: int) -> InferenceResult:
+    timepoint = datetime.datetime.now()
     init_global_seeds(seed)
     denoising_duration = 0
     start = time.perf_counter()
@@ -84,6 +87,7 @@ class Synthesizer():
       was_overamplified=was_overamplified,
       wav_denoised=audio_denoised_np,
       denoising_duration_s=denoising_duration,
+      timepoint=timepoint,
     )
 
     return res

@@ -14,38 +14,30 @@ from general_utils import GenericList
 from image_utils import (calculate_structual_similarity_np,
                          make_same_width_by_filling_white)
 from mcd import get_mcd_between_mel_spectograms
+from pandas import DataFrame
 from tts_preparation import PreparedData, PreparedDataList
 from waveglow.core.model_checkpoint import CheckpointWaveglow
-from waveglow.core.synthesizer import Synthesizer
+from waveglow.core.synthesizer import InferenceResult, Synthesizer
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
 from waveglow.utils import cosine_dist_mels
 
 
 @dataclass
 class ValidationEntry():
-  entry_id: int = None
-  ds_entry_id: int = None
-  text_original: str = None
-  text: str = None
-  wav_path: str = None
-  denoising_duration_s: float = None
-  was_overamplified: bool = None
+  utterance: PreparedData = None
+  inference_result: InferenceResult = None
   seed: int = None
-  original_duration_s: float = None
-  inferred_duration_s: float = None
+  #original_duration_s: float = None
   diff_duration_s: float = None
-  unique_symbols_count: int = None
-  speaker_id: int = None
   iteration: int = None
-  inference_duration_s: float = None
-  symbol_count: int = None
-  timepoint: str = None
+  inferred_duration_s: float = None
+  timepoint: datetime.datetime = None
   train_name: str = None
-  sampling_rate: int = None
   diff_frames: int = None
-  mcd_dtw: float = None
-  mcd_dtw_penalty: int = None
-  mcd_dtw_frames: int = None
+  mfcc_no_coeffs: int = None
+  mfcc_dtw_mcd: float = None
+  mfcc_dtw_penalty: float = None
+  mfcc_dtw_frames: int = None
   mcd: float = None
   mcd_penalty: int = None
   mcd_frames: int = None
@@ -57,6 +49,63 @@ class ValidationEntry():
 
 class ValidationEntries(GenericList[ValidationEntry]):
   pass
+
+
+def get_df(entries: ValidationEntries) -> DataFrame:
+  if len(entries) == 0:
+    return DataFrame()
+
+  data = [
+    {
+      "Id": entry.utterance.identifier,
+      "Timepoint": f"{entry.timepoint:%Y/%m/%d %H:%M:%S}",
+      "Iteration": entry.iteration,
+      "Seed": entry.seed,
+      "Language": repr(entry.utterance.symbols_language),
+      "Symbols": ''.join(entry.utterance.symbols),
+      "Symbols format": repr(entry.utterance.symbols_format),
+      "Speaker": entry.utterance.speaker_name,
+      "Speaker Id": entry.utterance.speaker_id,
+      "Sigma": entry.sigma,
+      "Denoiser strength": entry.denoiser_strength,
+      "Inference duration (s)": entry.inference_result.inference_duration_s,
+      "Denoising duration (s)": entry.inference_result.denoising_duration_s,
+      "Overamplified?": entry.inference_result.was_overamplified,
+      "Inferred wav duration (s)": entry.inferred_duration_s,
+      "Original wav duration (s)": entry.utterance.wav_duration,
+      "Difference wav duration (s)": entry.inferred_duration_s - entry.utterance.wav_duration,
+      "# Difference frames": entry.diff_frames,
+      "Sampling rate (Hz)": entry.inference_result.sampling_rate,
+      "# MFCC Coefficients": entry.mfcc_no_coeffs,
+      "MFCC DTW MCD": entry.mfcc_dtw_mcd,
+      "MFCC DTW PEN": entry.mfcc_dtw_penalty,
+      "# MFCC DTW frames": entry.mfcc_dtw_frames,
+      "MCD": entry.mcd,
+      "PEN": entry.mcd_penalty,
+      "# Frames": entry.mcd_frames,
+      "Cosine Similarity (Padded)": entry.cosine_similarity,
+      "Structual Similarity (Padded)": entry.structural_similarity,
+      "1-gram rarity (total set)": entry.utterance.one_gram_rarity,
+      "2-gram rarity (total set)": entry.utterance.two_gram_rarity,
+      "3-gram rarity (total set)": entry.utterance.three_gram_rarity,
+      "Combined rarity (total set)": entry.utterance.one_gram_rarity + entry.utterance.two_gram_rarity + entry.utterance.three_gram_rarity,
+      "# Symbols": len(entry.utterance.symbols),
+      "Unique symbols": ' '.join(sorted(set(entry.utterance.symbols))),
+      "# Unique symbols": len(set(entry.utterance.symbols)),
+      "Train name": entry.train_name,
+      "Ds-Id": entry.utterance.ds_entry_id,
+      "Wav path original": str(entry.utterance.wav_original_absolute_path),
+      "Wav path": str(entry.utterance.wav_absolute_path),
+    }
+    for entry in entries.items()
+  ]
+
+  df = DataFrame(
+    data=[x.values() for x in data],
+    columns=data[0].keys(),
+  )
+
+  return df
 
 
 @dataclass
@@ -108,38 +157,31 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     mel_var = mel_var.cuda()
     mel_var = mel_var.unsqueeze(0)
 
-    inference_result = synth.infer(mel_var, sigma, denoiser_strength, seed=seed)
+    timepoint = datetime.datetime.now()
+    inference_result = synth.infer(
+      mel=mel_var,
+      sigma=sigma,
+      denoiser_strength=denoiser_strength,
+      seed=seed
+    )
+
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
-    symbol_count = len(entry.symbols)
-    unique_symbols_count = len(set(entry.symbols))
-    timepoint = f"{datetime.datetime.now():%Y/%m/%d %H:%M:%S}"
-
     val_entry = ValidationEntry(
-      entry_id=entry.entry_id,
-      ds_entry_id=entry.ds_entry_id,
-      text_original=''.join(entry.symbols_original),
-      text=''.join(entry.symbols),
+      utterance=entry,
+      inference_result=inference_result,
       seed=seed,
-      wav_path=entry.wav_absolute_path,
-      original_duration_s=entry.wav_duration,
-      speaker_id=entry.speaker_id,
       iteration=checkpoint.iteration,
-      unique_symbols_count=unique_symbols_count,
-      symbol_count=symbol_count,
       timepoint=timepoint,
       train_name=train_name,
-      sampling_rate=inference_result.sampling_rate,
-      inference_duration_s=inference_result.inference_duration_s,
-      was_overamplified=inference_result.was_overamplified,
-      denoising_duration_s=inference_result.denoising_duration_s,
       inferred_duration_s=get_duration_s(
         inference_result.wav_denoised, inference_result.sampling_rate),
       denoiser_strength=denoiser_strength,
       sigma=sigma,
+      mfcc_no_coeffs=MCD_NO_OF_COEFFS_PER_FRAME,
     )
 
-    val_entry.diff_duration_s = val_entry.inferred_duration_s - val_entry.original_duration_s
+    val_entry.diff_duration_s = val_entry.inferred_duration_s - val_entry.utterance.wav_duration
 
     mel_orig = mel.cpu().numpy()
 
@@ -171,9 +213,9 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     )
 
     val_entry.diff_frames = mel_inferred_denoised.shape[1] - mel_orig.shape[1]
-    val_entry.mcd_dtw = mcd_dtw
-    val_entry.mcd_dtw_penalty = penalty_dtw
-    val_entry.mcd_dtw_frames = final_frame_number_dtw
+    val_entry.mfcc_dtw_mcd = mcd_dtw
+    val_entry.mfcc_dtw_penalty = penalty_dtw
+    val_entry.mfcc_dtw_frames = final_frame_number_dtw
 
     mcd, penalty, final_frame_number = get_mcd_between_mel_spectograms(
       mel_1=mel_orig,
@@ -225,16 +267,15 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
                    mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
-    logger.info(f"Current: {val_entry.entry_id}")
-    logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
-    logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
-    logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
+    logger.info(f"Current: {val_entry.utterance.entry_id}")
+    logger.info(f"MCD DTW: {val_entry.mfcc_dtw_mcd}")
+    logger.info(f"MCD DTW penalty: {val_entry.mfcc_dtw_penalty}")
+    logger.info(f"MCD DTW frames: {val_entry.mfcc_dtw_frames}")
 
     logger.info(f"MCD: {val_entry.mcd}")
     logger.info(f"MCD penalty: {val_entry.mcd_penalty}")
     logger.info(f"MCD frames: {val_entry.mcd_frames}")
 
-    # logger.info(f"MCD DTW V2: {val_entry.mcd_dtw_v2}")
     logger.info(f"Structural Similarity: {val_entry.structural_similarity}")
     logger.info(f"Cosine Similarity: {val_entry.cosine_similarity}")
     save_callback(entry, validation_entry_output)

@@ -1,8 +1,8 @@
 import datetime
 from dataclasses import dataclass
 from logging import Logger
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
-from general_utils.generic_list import GenericList
 
 import imageio
 import numpy as np
@@ -10,9 +10,11 @@ import torch
 from audio_utils import get_duration_s, normalize_wav
 from audio_utils.audio import concatenate_audios
 from audio_utils.mel import TacotronSTFT, plot_melspec_np
+from general_utils.generic_list import GenericList
 from image_utils import (calculate_structual_similarity_np,
                          make_same_width_by_filling_white)
 from mcd import get_mcd_between_mel_spectograms
+from pandas import DataFrame
 from tqdm import tqdm
 from waveglow.core.model_checkpoint import CheckpointWaveglow
 from waveglow.core.synthesizer import InferenceResult, Synthesizer
@@ -21,16 +23,22 @@ from waveglow.utils import cosine_dist_mels
 
 
 @dataclass
+class InferMelEntry():
+  identifier: str
+  mel: np.ndarray
+  mel_path: Path
+  sr: int
+
+
+@dataclass
 class InferenceEntry():
-  identifier: str = None
-  denoising_duration_s: float = None
-  was_overamplified: bool = None
+  entry: InferMelEntry = None
+  inference_result: InferenceResult = None
+  seed: int = None
   inferred_duration_s: float = None
   iteration: int = None
-  inference_duration_s: float = None
-  timepoint: str = None
-  sampling_rate: int = None
-  diff_frames: int = None
+  mel_original_frames: int = None
+  mel_inferred_frames: int = None
   mcd_dtw: float = None
   mcd_dtw_penalty: int = None
   mcd_dtw_frames: int = None
@@ -41,10 +49,47 @@ class InferenceEntry():
   cosine_similarity: float = None
   denoiser_strength: float = None
   sigma: float = None
+  train_name: str = None
+  mel_path: Path = None
 
 
 class InferenceEntries(GenericList[InferenceEntry]):
   pass
+
+
+def get_df(entries: InferenceEntries) -> DataFrame:
+  if len(entries) == 0:
+    return DataFrame()
+
+  data = [
+    {
+      "Id": entry.entry.identifier,
+      "Timepoint": f"{entry.inference_result.timepoint:%Y/%m/%d %H:%M:%S}",
+      "Iteration": entry.iteration,
+      "Seed": entry.seed,
+      "Sigma": entry.sigma,
+      "Denoiser strength": entry.denoiser_strength,
+      "Inference duration (s)": entry.inference_result.inference_duration_s,
+      "Denoising duration (s)": entry.inference_result.denoising_duration_s,
+      "Overamplified?": entry.inference_result.was_overamplified,
+      "Inferred wav duration (s)": entry.inferred_duration_s,
+      "# Frames original mel": entry.mel_original_frames,
+      "# Frames inferred mel": entry.mel_inferred_frames,
+      "# Difference frames": entry.mel_inferred_frames - entry.mel_original_frames,
+      "Sampling rate (Hz)": entry.inference_result.sampling_rate,
+      "Train name": entry.train_name,
+      "Mel path": str(entry.entry.mel_path),
+      "Mel sampling rate": str(entry.entry.sr),
+    }
+    for entry in entries.items()
+  ]
+
+  df = DataFrame(
+    data=[x.values() for x in data],
+    columns=data[0].keys(),
+  )
+
+  return df
 
 
 @dataclass
@@ -67,14 +112,7 @@ def mel_to_torch(mel: np.ndarray) -> np.ndarray:
   return res
 
 
-@dataclass
-class InferMelEntry():
-  identifier: str
-  mel: np.ndarray
-  sr: int
-
-
-def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
+def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, train_name: str, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
   inference_entries = InferenceEntries()
 
   if len(mel_entries) == 0:
@@ -119,20 +157,17 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
   mel_entry: InferMelEntry
   for mel_entry, inference_result in tqdm(zip(mel_entries, inference_results)):
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
-    timepoint = f"{datetime.datetime.now():%Y/%m/%d %H:%M:%S}"
 
     val_entry = InferenceEntry(
-      identifier=mel_entry.identifier,
+      entry=mel_entry,
+      inference_result=inference_result,
       iteration=checkpoint.iteration,
-      timepoint=timepoint,
-      sampling_rate=inference_result.sampling_rate,
-      inference_duration_s=inference_result.inference_duration_s,
-      was_overamplified=inference_result.was_overamplified,
-      denoising_duration_s=inference_result.denoising_duration_s,
       inferred_duration_s=get_duration_s(
         inference_result.wav_denoised, inference_result.sampling_rate),
       denoiser_strength=denoiser_strength,
       sigma=sigma,
+      seed=seed,
+      train_name=train_name,
     )
 
     mel_orig = mel_entry.mel
@@ -162,7 +197,8 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
       use_dtw=True,
     )
 
-    val_entry.diff_frames = mel_inferred_denoised.shape[1] - mel_orig.shape[1]
+    val_entry.mel_original_frames = mel_orig.shape[1]
+    val_entry.mel_inferred_frames = mel_inferred_denoised.shape[1]
     val_entry.mcd_dtw = mcd_dtw
     val_entry.mcd_dtw_penalty = penalty_dtw
     val_entry.mcd_dtw_frames = final_frame_number_dtw
@@ -216,7 +252,7 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
     imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
-    logger.info(f"Current: {val_entry.identifier}")
+    logger.info(f"Current: {val_entry.entry.identifier}")
     logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
     logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
     logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
