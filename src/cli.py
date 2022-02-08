@@ -99,6 +99,7 @@ def init_inference_parse_json_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--custom_hparams', type=str)
   parser.add_argument('--no_concatenation', action="store_true")
   parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--fast', action="store_true")
   return infer_parse_json_cli
 
 
@@ -118,6 +119,7 @@ def init_inference_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--custom_hparams', type=str)
   parser.add_argument('--no_concatenation', action="store_true")
   parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--fast', action="store_true")
   return infer_cli
 
 

@@ -104,6 +104,7 @@ class InferenceEntryOutput():
   wav_inferred_denoised: np.ndarray = None
   mel_denoised_diff_img: np.ndarray = None
   wav_inferred: np.ndarray = None
+  was_fast: bool = None
 
 
 def mel_to_torch(mel: np.ndarray) -> np.ndarray:
@@ -112,7 +113,7 @@ def mel_to_torch(mel: np.ndarray) -> np.ndarray:
   return res
 
 
-def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, train_name: str, logger: Logger) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
+def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, train_name: str, logger: Logger, fast: bool) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
   inference_entries = InferenceEntries()
 
   if len(mel_entries) == 0:
@@ -187,83 +188,85 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
       mel_denoised_diff_img=None,
       mel_inferred_denoised_img=None,
       mel_orig_img=None,
+      was_fast=fast,
     )
 
-    mcd_dtw, penalty_dtw, final_frame_number_dtw = get_mcd_between_mel_spectograms(
-      mel_1=mel_orig,
-      mel_2=mel_inferred_denoised,
-      n_mfcc=MCD_NO_OF_COEFFS_PER_FRAME,
-      take_log=False,
-      use_dtw=True,
-    )
+    if not fast:
+      mcd_dtw, penalty_dtw, final_frame_number_dtw = get_mcd_between_mel_spectograms(
+        mel_1=mel_orig,
+        mel_2=mel_inferred_denoised,
+        n_mfcc=MCD_NO_OF_COEFFS_PER_FRAME,
+        take_log=False,
+        use_dtw=True,
+      )
 
-    val_entry.mel_original_frames = mel_orig.shape[1]
-    val_entry.mel_inferred_frames = mel_inferred_denoised.shape[1]
-    val_entry.mcd_dtw = mcd_dtw
-    val_entry.mcd_dtw_penalty = penalty_dtw
-    val_entry.mcd_dtw_frames = final_frame_number_dtw
+      val_entry.mel_original_frames = mel_orig.shape[1]
+      val_entry.mel_inferred_frames = mel_inferred_denoised.shape[1]
+      val_entry.mcd_dtw = mcd_dtw
+      val_entry.mcd_dtw_penalty = penalty_dtw
+      val_entry.mcd_dtw_frames = final_frame_number_dtw
 
-    mcd, penalty, final_frame_number = get_mcd_between_mel_spectograms(
-      mel_1=mel_orig,
-      mel_2=mel_inferred_denoised,
-      n_mfcc=MCD_NO_OF_COEFFS_PER_FRAME,
-      take_log=False,
-      use_dtw=False,
-    )
+      mcd, penalty, final_frame_number = get_mcd_between_mel_spectograms(
+        mel_1=mel_orig,
+        mel_2=mel_inferred_denoised,
+        n_mfcc=MCD_NO_OF_COEFFS_PER_FRAME,
+        take_log=False,
+        use_dtw=False,
+      )
 
-    val_entry.mcd = mcd
-    val_entry.mcd_penalty = penalty
-    val_entry.mcd_frames = final_frame_number
+      val_entry.mcd = mcd
+      val_entry.mcd_penalty = penalty
+      val_entry.mcd_frames = final_frame_number
 
-    cosine_similarity = cosine_dist_mels(mel_orig, mel_inferred_denoised)
-    val_entry.cosine_similarity = cosine_similarity
+      cosine_similarity = cosine_dist_mels(mel_orig, mel_inferred_denoised)
+      val_entry.cosine_similarity = cosine_similarity
 
-    mel_original_img_raw, mel_original_img = plot_melspec_np(mel_orig)
-    mel_inferred_denoised_img_raw, mel_inferred_denoised_img = plot_melspec_np(
-      mel_inferred_denoised)
+      mel_original_img_raw, mel_original_img = plot_melspec_np(mel_orig)
+      mel_inferred_denoised_img_raw, mel_inferred_denoised_img = plot_melspec_np(
+        mel_inferred_denoised)
 
-    validation_entry_output.mel_orig_img = mel_original_img
-    validation_entry_output.mel_inferred_denoised_img = mel_inferred_denoised_img
+      validation_entry_output.mel_orig_img = mel_original_img
+      validation_entry_output.mel_inferred_denoised_img = mel_inferred_denoised_img
 
-    mel_original_img_raw_same_dim, mel_inferred_denoised_img_raw_same_dim = make_same_width_by_filling_white(
-      img_a=mel_original_img_raw,
-      img_b=mel_inferred_denoised_img_raw,
-    )
+      mel_original_img_raw_same_dim, mel_inferred_denoised_img_raw_same_dim = make_same_width_by_filling_white(
+        img_a=mel_original_img_raw,
+        img_b=mel_inferred_denoised_img_raw,
+      )
 
-    mel_original_img_same_dim, mel_inferred_denoised_img_same_dim = make_same_width_by_filling_white(
-      img_a=mel_original_img,
-      img_b=mel_inferred_denoised_img,
-    )
+      mel_original_img_same_dim, mel_inferred_denoised_img_same_dim = make_same_width_by_filling_white(
+        img_a=mel_original_img,
+        img_b=mel_inferred_denoised_img,
+      )
 
-    structural_similarity_raw, mel_difference_denoised_img_raw = calculate_structual_similarity_np(
-        img_a=mel_original_img_raw_same_dim,
-        img_b=mel_inferred_denoised_img_raw_same_dim,
-    )
-    val_entry.structural_similarity = structural_similarity_raw
+      structural_similarity_raw, mel_difference_denoised_img_raw = calculate_structual_similarity_np(
+          img_a=mel_original_img_raw_same_dim,
+          img_b=mel_inferred_denoised_img_raw_same_dim,
+      )
+      val_entry.structural_similarity = structural_similarity_raw
 
-    structural_similarity, mel_denoised_diff_img = calculate_structual_similarity_np(
-        img_a=mel_original_img_same_dim,
-        img_b=mel_inferred_denoised_img_same_dim,
-    )
-    validation_entry_output.mel_denoised_diff_img = mel_denoised_diff_img
+      structural_similarity, mel_denoised_diff_img = calculate_structual_similarity_np(
+          img_a=mel_original_img_same_dim,
+          img_b=mel_inferred_denoised_img_same_dim,
+      )
+      validation_entry_output.mel_denoised_diff_img = mel_denoised_diff_img
 
-    imageio.imsave("/tmp/mel_original_img_raw.png", mel_original_img_raw)
-    imageio.imsave("/tmp/mel_inferred_img_raw.png", mel_inferred_denoised_img_raw)
-    imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
+      imageio.imsave("/tmp/mel_original_img_raw.png", mel_original_img_raw)
+      imageio.imsave("/tmp/mel_inferred_img_raw.png", mel_inferred_denoised_img_raw)
+      imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
 
-    # logger.info(val_entry)
-    logger.info(f"Current: {val_entry.entry.identifier}")
-    logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
-    logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
-    logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
+      # logger.info(val_entry)
+      logger.info(f"Current: {val_entry.entry.identifier}")
+      logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
+      logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
+      logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
 
-    logger.info(f"MCD: {val_entry.mcd}")
-    logger.info(f"MCD penalty: {val_entry.mcd_penalty}")
-    logger.info(f"MCD frames: {val_entry.mcd_frames}")
+      logger.info(f"MCD: {val_entry.mcd}")
+      logger.info(f"MCD penalty: {val_entry.mcd_penalty}")
+      logger.info(f"MCD frames: {val_entry.mcd_frames}")
 
-    # logger.info(f"MCD DTW V2: {val_entry.mcd_dtw_v2}")
-    logger.info(f"Structural Similarity: {val_entry.structural_similarity}")
-    logger.info(f"Cosine Similarity: {val_entry.cosine_similarity}")
+      # logger.info(f"MCD DTW V2: {val_entry.mcd_dtw_v2}")
+      logger.info(f"Structural Similarity: {val_entry.structural_similarity}")
+      logger.info(f"Cosine Similarity: {val_entry.cosine_similarity}")
     save_callback(validation_entry_output)
     inference_entries.append(val_entry)
 
