@@ -1,6 +1,6 @@
-from pathlib import Path
 import shutil
 from logging import getLogger
+from pathlib import Path
 
 from waveglow.app.defaults import DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION
 from waveglow.app.io import get_checkpoints_dir, get_train_dir
@@ -9,7 +9,7 @@ from waveglow.utils import get_pytorch_filename
 
 
 def dl_pretrained(base_dir: Path, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION) -> None:
-  train_dir = get_train_dir(base_dir, train_name, create=True)
+  train_dir = get_train_dir(base_dir, train_name)
   assert train_dir.is_dir()
   checkpoints_dir = get_checkpoints_dir(train_dir)
   tmp_dest_path = checkpoints_dir / get_pytorch_filename("1")
