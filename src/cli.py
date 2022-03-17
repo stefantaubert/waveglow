@@ -11,6 +11,7 @@ from waveglow.app import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SENTENCE_PAUSE_S,
                           validate_generic)
 from waveglow.app.defaults import DEFAULT_READ_MEL_INFO_PATH, DEFAULT_SEED
 from waveglow.app.inference import infer_parse_json
+from waveglow.app.inference_v2 import infer_mels
 
 BASE_DIR_VAR = "base_dir"
 
@@ -135,10 +136,23 @@ def init_download_parser(parser: ArgumentParser) -> None:
   return dl_pretrained
 
 
+def init_inference_v2_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('checkpoint', type=Path)
+  parser.add_argument('directory', type=Path)
+  parser.add_argument('--sigma', type=float, default=1.0)
+  parser.add_argument('--denoiser-strength', type=float, default=0.0005)
+  parser.add_argument('--custom-seed', type=int, default=None)
+  parser.add_argument('--batch-size', type=int, default=64)
+  parser.add_argument('--include-stats', action="store_true")
+  parser.add_argument('-out', '--output-directory', type=Path)
+  parser.add_argument('-o', '--overwrite', action="store_true")
+  return infer_mels
+
+
 def add_base_dir(parser: ArgumentParser) -> None:
-  assert BASE_DIR_VAR in os.environ.keys()
-  base_dir = Path(os.environ[BASE_DIR_VAR])
-  parser.set_defaults(base_dir=base_dir)
+  if BASE_DIR_VAR in os.environ.keys():
+    base_dir = Path(os.environ[BASE_DIR_VAR])
+    parser.set_defaults(base_dir=base_dir)
 
 
 def _add_parser_to(subparsers, name: str, init_method) -> None:
@@ -159,6 +173,7 @@ def _init_parser():
   _add_parser_to(subparsers, "validate", init_validate_parser)
   _add_parser_to(subparsers, "validate-generic", init_validate_generic_parser)
   _add_parser_to(subparsers, "infer", init_inference_parser)
+  _add_parser_to(subparsers, "infer-mels", init_inference_v2_parser)
   _add_parser_to(subparsers, "infer-json", init_inference_parse_json_parser)
 
   return result
@@ -166,8 +181,9 @@ def _init_parser():
 
 def _process_args(args) -> None:
   params = vars(args)
-  invoke_handler = params.pop("invoke_handler")
-  invoke_handler(**params)
+  if "invoke_handler" in params:
+    invoke_handler = params.pop("invoke_handler")
+    invoke_handler(**params)
 
 
 if __name__ == "__main__":
