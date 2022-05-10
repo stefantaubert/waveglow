@@ -13,7 +13,7 @@ from audio_utils.mel import TacotronSTFT, plot_melspec_np
 from general_utils.generic_list import GenericList
 from image_utils import (calculate_structual_similarity_np,
                          make_same_width_by_filling_white)
-from mcd import get_mcd_between_mel_spectograms
+from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
 from waveglow.core.model_checkpoint import CheckpointWaveglow
@@ -192,9 +192,8 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
     )
 
     if not fast:
-      mcd_dtw, penalty_dtw, final_frame_number_dtw = get_mcd_between_mel_spectograms(
-        mel_1=mel_orig,
-        mel_2=mel_inferred_denoised,
+      mcd_dtw, penalty_dtw, final_frame_number_dtw = get_metrics_mels(
+        mel_orig, mel_inferred_denoised,
         n_mfcc=MCD_NO_OF_COEFFS_PER_FRAME,
         take_log=False,
         use_dtw=True,
@@ -206,9 +205,8 @@ def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, cust
       val_entry.mcd_dtw_penalty = penalty_dtw
       val_entry.mcd_dtw_frames = final_frame_number_dtw
 
-      mcd, penalty, final_frame_number = get_mcd_between_mel_spectograms(
-        mel_1=mel_orig,
-        mel_2=mel_inferred_denoised,
+      mcd, penalty, final_frame_number = get_metrics_mels(
+        mel_orig, mel_inferred_denoised,
         n_mfcc=MCD_NO_OF_COEFFS_PER_FRAME,
         take_log=False,
         use_dtw=False,
