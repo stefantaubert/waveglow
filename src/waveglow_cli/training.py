@@ -1,17 +1,11 @@
-import logging
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Dict, Optional
+from typing import Optional
 
 from general_utils import split_hparams_string
-from tts_preparation import (get_merged_dir, get_prep_dir, load_trainset,
-                             load_valset)
-from waveglow import CheckpointWaveglow
-from waveglow import continue_train as continue_train_core
-from waveglow import train as train_core
-from waveglow.logger import WaveglowLogger
+from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import train
 from waveglow.utils import (get_custom_or_last_checkpoint, get_last_checkpoint,
                             prepare_logger)
@@ -20,9 +14,7 @@ from waveglow_cli.argparse_helper import (get_optional,
                                           parse_existing_directory,
                                           parse_existing_file, parse_non_empty,
                                           parse_path)
-from waveglow_cli.io import (get_checkpoints_dir, get_train_dir,
-                             get_train_log_file, get_train_logs_dir,
-                             load_prep_settings, save_prep_settings)
+from waveglow_cli.io import get_checkpoints_dir, get_train_dir
 from waveglow_cli.parser import load_dataset
 
 

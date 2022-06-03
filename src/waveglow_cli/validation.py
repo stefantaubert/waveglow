@@ -1,37 +1,30 @@
-import datetime
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from pathlib import Path
-from typing import Dict, Optional, Set
+from typing import Optional, Set
 
 import imageio
 import numpy as np
-from general_utils import split_hparams_string, split_int_set_str
+from general_utils import split_hparams_string
 from ordered_set import OrderedSet
 from tqdm import tqdm
-from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
-                             load_testset, load_valset)
-from tts_preparation.app.prepare import load_totalset
-from waveglow import (CheckpointWaveglow, ValidationEntries,
-                      ValidationEntryOutput)
-from waveglow import validate as validate_core
+from tts_preparation import PreparedData
 from waveglow.audio_utils import float_to_wav
 from waveglow.image_utils import stack_images_vertically
-from waveglow.utils import (get_all_checkpoint_iterations, get_checkpoint,
-                            get_last_checkpoint, prepare_logger)
-from waveglow.validation import get_df
+from waveglow.model_checkpoint import CheckpointWaveglow
+from waveglow.utils import get_checkpoint, get_last_checkpoint, prepare_logger
+from waveglow.validation import (ValidationEntries, ValidationEntryOutput,
+                                 get_df, validate)
 
 from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction,
                                           ConvertToSetAction, get_optional,
-                                          parse_existing_directory, parse_float_between_zero_and_one,
+                                          parse_existing_directory,
+                                          parse_float_between_zero_and_one,
                                           parse_non_empty,
-                                          parse_non_negative_float,
                                           parse_non_negative_integer,
                                           parse_path, parse_positive_integer)
 from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
                                    DEFAULT_SIGMA)
-from waveglow_cli.io import (_get_validation_root_dir, get_checkpoints_dir,
-                             get_train_dir, load_prep_settings)
 from waveglow_cli.parser import load_dataset
 
 
@@ -141,7 +134,7 @@ def validate_ns(ns: Namespace) -> bool:
     taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
     save_callback = partial(save_results, val_dir=ns.output_dir, iteration=iteration)
 
-    validation_entries = validate_core(
+    validation_entries = validate(
       checkpoint=taco_checkpoint,
       data=data,
       custom_hparams=custom_hparams,

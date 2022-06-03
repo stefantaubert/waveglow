@@ -12,8 +12,6 @@ from typing import Callable, Generator, List, Tuple
 
 from waveglow_cli.argparse_helper import get_optional, parse_path
 from waveglow_cli.dl import init_download_parser
-from waveglow_cli.inference import (init_inference_parse_json_parser,
-                                    init_inference_parser)
 from waveglow_cli.inference_v2 import init_inference_v2_parser
 from waveglow_cli.logging_configuration import (configure_root_logger,
                                                 get_file_logger,
@@ -43,9 +41,9 @@ def get_parsers() -> Parsers:
   yield "train", "train", init_train_parser
   yield "continue-train", "continue-train", init_continue_train_parser
   yield "validate", "validate", init_validate_parser
-  yield "infer", "infer", init_inference_parser
-  yield "infer-mels", "infer-mels", init_inference_v2_parser
-  yield "infer-json", "infer-json", init_inference_parse_json_parser
+  # yield "infer", "infer", init_inference_parser
+  yield "infer", "infer-mels", init_inference_v2_parser
+  # yield "infer-json", "infer-json", init_inference_parse_json_parser
 
 
 def print_features():

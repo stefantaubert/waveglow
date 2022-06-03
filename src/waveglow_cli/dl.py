@@ -1,14 +1,11 @@
-import shutil
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
-from pathlib import Path
 
-from waveglow import convert_glow, dl_wg
-from waveglow.utils import get_pytorch_filename
+from waveglow.converter.convert import convert_glow
+from waveglow.dl_pretrained import dl_wg
 
 from waveglow_cli.argparse_helper import parse_path
-from waveglow_cli.defaults import DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION
-from waveglow_cli.io import get_checkpoints_dir, get_train_dir
+from waveglow_cli.defaults import DEFAULT_WAVEGLOW_VERSION
 
 
 def init_download_parser(parser: ArgumentParser) -> None:

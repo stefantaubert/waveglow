@@ -22,9 +22,9 @@ from waveglow.typing import Entries
 from waveglow.utils import (SaveIterationSettings, check_save_it,
                             copy_state_dict, get_continue_batch_iteration,
                             get_continue_epoch, get_formatted_current_total,
-                            get_last_checkpoint, get_pytorch_filename,
-                            init_cuddn, init_cuddn_benchmark, init_torch_seed,
-                            log_hparams, skip_batch, validate_model)
+                            get_pytorch_filename, init_cuddn,
+                            init_cuddn_benchmark, init_torch_seed, log_hparams,
+                            skip_batch, validate_model)
 
 
 class WaveGlowLoss(torch.nn.Module):

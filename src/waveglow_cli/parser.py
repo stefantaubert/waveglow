@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Generator, List
 
 from waveglow.typing import Entries, Entry
 from waveglow.utils import get_all_files_in_all_subfolders
