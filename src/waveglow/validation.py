@@ -3,12 +3,11 @@ import random
 from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
-from typing import Callable, Dict, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
 import imageio
 import numpy as np
 import torch
-from general_utils import GenericList
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
@@ -50,7 +49,7 @@ class ValidationEntry():
   sigma: float = None
 
 
-class ValidationEntries(GenericList[ValidationEntry]):
+class ValidationEntries(List[ValidationEntry]):
   pass
 
 
@@ -100,7 +99,7 @@ def get_df(entries: ValidationEntries) -> DataFrame:
       # "Wav path original": str(entry.entry.wav_original_absolute_path),
       "Wav path": str(entry.entry.wav_absolute_path),
     }
-    for entry in entries.items()
+    for entry in entries
   ]
 
   df = DataFrame(

@@ -8,9 +8,6 @@ from typing import Any, Dict, Optional, Tuple
 import imageio
 import matplotlib.pylab as plt
 import numpy as np
-from general_utils import parse_json, save_json
-from tts_preparation import PreparedData
-
 from waveglow.audio_utils import float_to_wav, plot_melspec
 from waveglow.image_utils import (calculate_structual_similarity,
                                   stack_images_vertically)
@@ -113,20 +110,20 @@ def get_wav_out_dict(name: str, root_dir: Path, wav_info_dict: Dict[str, Any]) -
 #   return Entries.load(PreparedData, path)
 
 
-def load_prep_settings(train_dir: Path) -> Tuple[Path, str, str]:
-  path = train_dir / _settings_json
-  res = parse_json(path)
-  return Path(res["ttsp_dir"]), res["merge_name"], res["prep_name"]
+# def load_prep_settings(train_dir: Path) -> Tuple[Path, str, str]:
+#   path = train_dir / _settings_json
+#   res = parse_json(path)
+#   return Path(res["ttsp_dir"]), res["merge_name"], res["prep_name"]
 
 
-def save_prep_settings(train_dir: Path, ttsp_dir: Path, merge_name: Optional[str], prep_name: Optional[str]) -> None:
-  settings = {
-    "ttsp_dir": str(ttsp_dir),
-    "merge_name": merge_name,
-    "prep_name": prep_name,
-  }
-  path = train_dir / _settings_json
-  save_json(path, settings)
+# def save_prep_settings(train_dir: Path, ttsp_dir: Path, merge_name: Optional[str], prep_name: Optional[str]) -> None:
+#   settings = {
+#     "ttsp_dir": str(ttsp_dir),
+#     "merge_name": merge_name,
+#     "prep_name": prep_name,
+#   }
+#   path = train_dir / _settings_json
+#   save_json(path, settings)
 
 
 # def split_dataset(prep_dir: Path, train_dir: Path, test_size: float = 0.01, validation_size: float = 0.05, split_seed: int = 1234):
@@ -168,9 +165,9 @@ def _get_validation_root_dir(train_dir: Path) -> Path:
   return train_dir / "validation"
 
 
-def get_val_dir(train_dir: Path, entry: PreparedData, iteration: int) -> Path:
-  subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},id={entry.entry_id},speaker={entry.speaker_id},it={iteration}"
-  return _get_validation_root_dir(train_dir) / subdir_name
+# def get_val_dir(train_dir: Path, entry: PreparedData, iteration: int) -> Path:
+#   subdir_name = f"{datetime.datetime.now():%Y-%m-%d,%H-%M-%S},id={entry.entry_id},speaker={entry.speaker_id},it={iteration}"
+#   return _get_validation_root_dir(train_dir) / subdir_name
 
 
 def save_val_plot(val_dir: Path, mel) -> None:

@@ -3,16 +3,14 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
+from typing import List
 
 import imageio
 import numpy as np
 import torch
-from general_utils import get_all_files_in_all_subfolders
-from general_utils.generic_list import GenericList
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
-
 from waveglow.audio_utils import (float_to_wav, get_duration_s, normalize_wav,
                                   plot_melspec_np)
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
@@ -22,7 +20,8 @@ from waveglow.image_utils import (calculate_structual_similarity_np,
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
-from waveglow.utils import cosine_dist_mels
+from waveglow.utils import cosine_dist_mels, get_all_files_in_all_subfolders
+
 from waveglow_cli.argparse_helper import (parse_existing_directory,
                                           parse_existing_file,
                                           parse_float_between_zero_and_one,
@@ -256,7 +255,7 @@ class InferenceEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-class InferenceEntries(GenericList[InferenceEntry]):
+class InferenceEntries(List[InferenceEntry]):
   pass
 
 
@@ -284,7 +283,7 @@ def get_df(entries: InferenceEntries) -> DataFrame:
       "Mel path": str(entry.entry.mel_path),
       "Mel sampling rate": str(entry.entry.sr),
     }
-    for entry in entries.items()
+    for entry in entries
   ]
 
   df = DataFrame(

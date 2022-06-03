@@ -6,7 +6,7 @@
 # import imageio
 # import numpy as np
 # import torch
-# from general_utils.generic_list import GenericList
+# from waveglow.utils.generic_list import GenericList
 # from mel_cepstral_distance import get_metrics_mels
 # from pandas import DataFrame
 # from tqdm import tqdm

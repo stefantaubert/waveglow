@@ -1,4 +1,4 @@
-# from general_utils import split_hparams_string, split_string
+# from waveglow.utils import split_hparams_string, split_string
 # import datetime
 # from argparse import ArgumentParser
 # from functools import partial
@@ -10,7 +10,7 @@
 # import imageio
 # import numpy as np
 # import regex as re
-# from general_utils import parse_json, pass_lines_list, save_json
+# from waveglow.utils import parse_json, pass_lines_list, save_json
 # from waveglow import CheckpointWaveglow, InferenceEntries, InferenceEntryOutput
 # from waveglow import infer as infer_core
 # from waveglow.audio_utils import float_to_wav

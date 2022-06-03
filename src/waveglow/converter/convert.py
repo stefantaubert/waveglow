@@ -7,7 +7,6 @@ import tempfile
 from dataclasses import asdict
 
 import torch
-
 from waveglow.hparams import HParams
 from waveglow.train import CheckpointWaveglow
 
@@ -87,5 +86,5 @@ def _convert_core(source: str, destination: str) -> CheckpointWaveglow:
 
   res.save(destination, logger)
 
-  logger.info(f"Successfully converted.")
+  logger.info("Successfully converted.")
   return res

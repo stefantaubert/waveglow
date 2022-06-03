@@ -5,17 +5,17 @@ from typing import Optional, Set
 
 import imageio
 import numpy as np
-from general_utils import split_hparams_string
 from ordered_set import OrderedSet
 from tqdm import tqdm
-from tts_preparation import PreparedData
-
 from waveglow.audio_utils import float_to_wav
 from waveglow.image_utils import stack_images_vertically
 from waveglow.model_checkpoint import CheckpointWaveglow
-from waveglow.utils import get_checkpoint, get_last_checkpoint, prepare_logger
+from waveglow.typing import Entry
+from waveglow.utils import (get_checkpoint, get_last_checkpoint,
+                            prepare_logger, split_hparams_string)
 from waveglow.validation import (ValidationEntries, ValidationEntryOutput,
                                  get_df, validate)
+
 from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction,
                                           ConvertToSetAction, get_optional,
                                           parse_existing_directory,
@@ -52,8 +52,8 @@ def get_repr_speaker(speaker: Optional[str]) -> str:
 #   return _get_validation_root_dir(train_dir) / subdir_name
 
 
-def get_val_entry_dir(val_dir: Path, entry: PreparedData, iteration: int) -> Path:
-  return val_dir / f"it={iteration}_id={entry.entry_id}"
+def get_val_entry_dir(val_dir: Path, entry: Entry, iteration: int) -> Path:
+  return val_dir / f"it={iteration}_name={entry.basename}"
 
 
 def save_stats(val_dir: Path, validation_entries: ValidationEntries) -> None:
@@ -62,7 +62,7 @@ def save_stats(val_dir: Path, validation_entries: ValidationEntries) -> None:
   df.to_csv(path, sep="\t", header=True, index=False)
 
 
-def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: Path, iteration: int) -> None:
+def save_results(entry: Entry, output: ValidationEntryOutput, val_dir: Path, iteration: int) -> None:
   dest_dir = get_val_entry_dir(val_dir, entry, iteration)
   dest_dir.mkdir(parents=True, exist_ok=True)
   imageio.imsave(dest_dir / "original.png", output.mel_orig_img)

@@ -8,14 +8,13 @@ from typing import Dict, List, Optional
 
 import numpy as np
 import torch
-from general_utils import overwrite_custom_hparams
 from tqdm import tqdm
 
 from waveglow.audio_utils import is_overamp
 from waveglow.denoiser import Denoiser
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import load_model
-from waveglow.utils import init_global_seeds
+from waveglow.utils import init_global_seeds, overwrite_custom_hparams
 
 
 @dataclass

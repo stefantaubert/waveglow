@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Optional, Type, TypeVar
 
 import torch
-from general_utils.main import get_dataclass_from_dict
+
+from waveglow.utils import get_dataclass_from_dict
 
 _HParamsType = TypeVar("_HParamsType")
 
