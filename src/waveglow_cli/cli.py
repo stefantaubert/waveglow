@@ -4,14 +4,14 @@ from pathlib import Path
 
 from general_utils import split_hparams_string, split_int_set_str, split_string
 
-from waveglow.app import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SENTENCE_PAUSE_S,
+from waveglow_cli import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SENTENCE_PAUSE_S,
                           DEFAULT_SIGMA, DEFAULT_WAVEGLOW,
                           DEFAULT_WAVEGLOW_VERSION, continue_train,
                           dl_pretrained, infer, train, validate,
                           validate_generic)
-from waveglow.app.defaults import DEFAULT_READ_MEL_INFO_PATH, DEFAULT_SEED
-from waveglow.app.inference import infer_parse_json
-from waveglow.app.inference_v2 import infer_mels
+from waveglow_cli.defaults import DEFAULT_READ_MEL_INFO_PATH, DEFAULT_SEED
+from waveglow_cli.inference import infer_parse_json
+from waveglow_cli.inference_v2 import infer_mels
 
 BASE_DIR_VAR = "base_dir"
 

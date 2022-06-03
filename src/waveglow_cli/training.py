@@ -5,13 +5,14 @@ from typing import Dict, Optional
 
 from tts_preparation import (get_merged_dir, get_prep_dir, load_trainset,
                              load_valset)
-from waveglow.app.io import (get_checkpoints_dir, get_train_dir,
+from waveglow import CheckpointWaveglow
+from waveglow import continue_train as continue_train_core
+from waveglow import train as train_core
+from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
+
+from waveglow_cli.io import (get_checkpoints_dir, get_train_dir,
                              get_train_log_file, get_train_logs_dir,
                              load_prep_settings, save_prep_settings)
-from waveglow.core import CheckpointWaveglow
-from waveglow.core import continue_train as continue_train_core
-from waveglow.core import train as train_core
-from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
 
 
 def try_load_checkpoint(base_dir: Path, train_name: Optional[str], checkpoint: Optional[int], logger: Logger) -> Optional[CheckpointWaveglow]:

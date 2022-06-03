@@ -12,13 +12,14 @@ from torch.nn import Parameter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from tts_preparation import PreparedDataList
+
 from waveglow.checkpoint import Checkpoint, get_iteration
-from waveglow.core.dataloader import (parse_batch, prepare_trainloader,
-                                      prepare_valloader)
-from waveglow.core.hparams import ExperimentHParams, HParams, OptimizerHParams
-from waveglow.core.logger import WaveglowLogger
-from waveglow.core.model import WaveGlow
-from waveglow.core.model_checkpoint import CheckpointWaveglow
+from waveglow.dataloader import (parse_batch, prepare_trainloader,
+                                 prepare_valloader)
+from waveglow.hparams import ExperimentHParams, HParams, OptimizerHParams
+from waveglow.logger import WaveglowLogger
+from waveglow.model import WaveGlow
+from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.utils import (SaveIterationSettings, check_save_it,
                             copy_state_dict, get_continue_batch_iteration,
                             get_continue_epoch, get_formatted_current_total,

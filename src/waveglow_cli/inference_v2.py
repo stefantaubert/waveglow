@@ -11,28 +11,28 @@ import imageio
 import numpy as np
 import regex as re
 import torch
-from audio_utils import float_to_wav, get_duration_s, normalize_wav
-from audio_utils.audio import concatenate_audios
 from general_utils import (get_all_files_in_all_subfolders, parse_json,
                            pass_lines_list, save_json)
 from tqdm import tqdm
-from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH,
+from waveglow import CheckpointWaveglow, InferenceEntries, InferenceEntryOutput
+from waveglow import infer as infer_core
+from waveglow.audio_utils import (concatenate_audios, float_to_wav,
+                                  get_duration_s, normalize_wav)
+from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
+from waveglow.inference import InferMelEntry, get_df, mel_to_torch
+from waveglow.model_checkpoint import CheckpointWaveglow
+from waveglow.synthesizer import InferenceResult, Synthesizer
+from waveglow.utils import (cosine_dist_mels, get_custom_or_last_checkpoint,
+                            prepare_logger)
+
+from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH,
                                    DEFAULT_READ_MEL_INFO_PATH,
                                    DEFAULT_SAVE_WAV_INFO_COPY_PATH,
                                    DEFAULT_SEED, DEFAULT_SENTENCE_PAUSE_S,
                                    DEFAULT_SIGMA)
-from waveglow.app.io import (get_checkpoints_dir, get_inference_root_dir,
+from waveglow_cli.io import (get_checkpoints_dir, get_inference_root_dir,
                              get_train_dir, get_wav_info_dict,
                              get_wav_out_dict)
-from waveglow.core import (CheckpointWaveglow, InferenceEntries,
-                           InferenceEntryOutput)
-from waveglow.core import infer as infer_core
-from waveglow.core.inference import InferMelEntry, get_df, mel_to_torch
-from waveglow.core.model_checkpoint import CheckpointWaveglow
-from waveglow.core.synthesizer import InferenceResult, Synthesizer
-from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
-from waveglow.utils import (cosine_dist_mels, get_custom_or_last_checkpoint,
-                            prepare_logger)
 
 
 def infer_mels(base_dir: Path, checkpoint: Path, directory: Path, sigma: float, denoiser_strength: float, custom_seed: Optional[int], include_stats: bool, batch_size: int, output_directory: Optional[Path], overwrite: bool) -> bool:

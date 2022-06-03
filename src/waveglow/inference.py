@@ -7,18 +7,19 @@ from typing import Callable, Dict, List, Optional, Tuple
 import imageio
 import numpy as np
 import torch
-from audio_utils import get_duration_s, normalize_wav
-from audio_utils.audio import concatenate_audios
-from audio_utils.mel import TacotronSTFT, plot_melspec_np
 from general_utils.generic_list import GenericList
 from image_utils import (calculate_structual_similarity_np,
                          make_same_width_by_filling_white)
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
-from waveglow.core.model_checkpoint import CheckpointWaveglow
-from waveglow.core.synthesizer import InferenceResult, Synthesizer
+
+from waveglow.audio_utils import (concatenate_audios, get_duration_s,
+                                  normalize_wav, plot_melspec_np)
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
+from waveglow.model_checkpoint import CheckpointWaveglow
+from waveglow.synthesizer import InferenceResult, Synthesizer
+from waveglow.taco_stft import TacotronSTFT
 from waveglow.utils import cosine_dist_mels
 
 

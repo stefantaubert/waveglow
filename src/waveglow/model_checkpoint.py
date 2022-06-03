@@ -4,8 +4,8 @@ from logging import Logger
 from torch.optim.adam import Adam  # pylint: disable=no-name-in-module
 
 from waveglow.checkpoint import Checkpoint
-from waveglow.core.hparams import HParams
-from waveglow.core.model import WaveGlow
+from waveglow.hparams import HParams
+from waveglow.model import WaveGlow
 
 
 @dataclass

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from audio_utils.mel import TSTFTHParams
+from waveglow.taco_stft import TSTFTHParams
 
 
 @dataclass

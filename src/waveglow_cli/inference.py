@@ -8,23 +8,23 @@ from typing import Any, Dict, List, Optional
 import imageio
 import numpy as np
 import regex as re
-from audio_utils import float_to_wav
 from general_utils import parse_json, pass_lines_list, save_json
 from image_utils import stack_images_vertically
 from image_utils.main import stack_images_horizontally
-from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH,
+from waveglow import CheckpointWaveglow, InferenceEntries, InferenceEntryOutput
+from waveglow import infer as infer_core
+from waveglow.audio_utils import float_to_wav
+from waveglow.inference import InferMelEntry, get_df
+from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
+
+from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH,
                                    DEFAULT_READ_MEL_INFO_PATH,
                                    DEFAULT_SAVE_WAV_INFO_COPY_PATH,
                                    DEFAULT_SEED, DEFAULT_SENTENCE_PAUSE_S,
                                    DEFAULT_SIGMA)
-from waveglow.app.io import (get_checkpoints_dir, get_inference_root_dir,
+from waveglow_cli.io import (get_checkpoints_dir, get_inference_root_dir,
                              get_train_dir, get_wav_info_dict,
                              get_wav_out_dict)
-from waveglow.core import (CheckpointWaveglow, InferenceEntries,
-                           InferenceEntryOutput)
-from waveglow.core import infer as infer_core
-from waveglow.core.inference import InferMelEntry, get_df
-from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
 
 OUTPUT_INFO_FILE_NAME = "wav_out.json"
 

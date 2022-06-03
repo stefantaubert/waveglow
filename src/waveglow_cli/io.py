@@ -8,11 +8,10 @@ from typing import Any, Dict, Optional, Tuple
 import imageio
 import matplotlib.pylab as plt
 import numpy as np
-from audio_utils import float_to_wav
-from audio_utils.mel import plot_melspec
 from general_utils import parse_json, save_json
 from image_utils import calculate_structual_similarity, stack_images_vertically
 from tts_preparation import PreparedData
+from waveglow.audio_utils import float_to_wav, plot_melspec
 
 
 def get_train_dir(base_dir: Path, train_name: str) -> None:

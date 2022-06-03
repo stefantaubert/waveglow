@@ -6,23 +6,23 @@ from typing import Dict, Optional, Set
 
 import imageio
 import numpy as np
-from audio_utils import float_to_wav
 from image_utils import stack_images_vertically
-from text_utils.types import Speaker
 from tqdm import tqdm
 from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
                              load_testset, load_valset)
 from tts_preparation.app.prepare import load_totalset
-from waveglow.app.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
-                                   DEFAULT_SIGMA)
-from waveglow.app.io import (_get_validation_root_dir, get_checkpoints_dir,
-                             get_train_dir, load_prep_settings)
-from waveglow.core import (CheckpointWaveglow, ValidationEntries,
-                           ValidationEntryOutput)
-from waveglow.core import validate as validate_core
-from waveglow.core.validation import get_df
+from waveglow import (CheckpointWaveglow, ValidationEntries,
+                      ValidationEntryOutput)
+from waveglow import validate as validate_core
+from waveglow.audio_utils import float_to_wav
 from waveglow.utils import (get_all_checkpoint_iterations, get_checkpoint,
                             get_last_checkpoint, prepare_logger)
+from waveglow.validation import get_df
+
+from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
+                                   DEFAULT_SIGMA)
+from waveglow_cli.io import (_get_validation_root_dir, get_checkpoints_dir,
+                             get_train_dir, load_prep_settings)
 
 
 def get_repr_entries(entry_ids: Optional[Set[int]]) -> str:
@@ -33,7 +33,7 @@ def get_repr_entries(entry_ids: Optional[Set[int]]) -> str:
   return ",".join(list(sorted(map(str, entry_ids))))
 
 
-def get_repr_speaker(speaker: Optional[Speaker]) -> Speaker:
+def get_repr_speaker(speaker: Optional[str]) -> str:
   if speaker is None:
     return "none"
   return speaker

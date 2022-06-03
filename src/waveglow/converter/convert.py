@@ -7,8 +7,8 @@ import tempfile
 from dataclasses import asdict
 
 import torch
-from waveglow.core.hparams import HParams
-from waveglow.core.train import CheckpointWaveglow
+from waveglow.hparams import HParams
+from waveglow.train import CheckpointWaveglow
 
 
 def convert_glow(origin: str, destination: str, keep_orig: bool = False) -> CheckpointWaveglow:

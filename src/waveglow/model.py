@@ -3,7 +3,7 @@
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
-from waveglow.core.hparams import HParams
+from waveglow.hparams import HParams
 
 
 @torch.jit.script
