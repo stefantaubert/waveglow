@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 from logging import Logger
 from math import floor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generator, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import torch
@@ -21,6 +21,12 @@ from tqdm import tqdm
 
 _T = TypeVar('_T')
 PYTORCH_EXT = ".pt"
+
+def get_all_files_in_all_subfolders(directory: Path) -> Generator[Path, None, None]:
+  for root, _, files in os.walk(directory):
+    for name in files:
+      file_path = Path(root) / name
+      yield file_path
 
 
 formatter = logging.Formatter(

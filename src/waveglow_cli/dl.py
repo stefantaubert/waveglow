@@ -1,4 +1,5 @@
 import shutil
+from argparse import ArgumentParser
 from logging import getLogger
 from pathlib import Path
 
@@ -7,6 +8,12 @@ from waveglow.utils import get_pytorch_filename
 
 from waveglow_cli.defaults import DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION
 from waveglow_cli.io import get_checkpoints_dir, get_train_dir
+
+
+def init_download_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--train_name', type=str, default=DEFAULT_WAVEGLOW)
+  parser.add_argument('--version', type=int, default=DEFAULT_WAVEGLOW_VERSION)
+  return dl_pretrained
 
 
 def dl_pretrained(base_dir: Path, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION) -> None:

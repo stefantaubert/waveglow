@@ -8,16 +8,18 @@ import numpy as np
 from general_utils import get_all_files_in_all_subfolders
 from tqdm import tqdm
 from waveglow import CheckpointWaveglow
-from waveglow.audio_utils import (float_to_wav, normalize_wav)
+from waveglow.audio_utils import float_to_wav, normalize_wav
 from waveglow.inference import mel_to_torch
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import Synthesizer
 
+from waveglow_cli.argparse_helper import (parse_existing_directory,
+                                          parse_existing_file, parse_path)
 
 
 def init_inference_v2_parser(parser: ArgumentParser) -> None:
-  parser.add_argument('checkpoint', type=Path)
-  parser.add_argument('directory', type=Path)
+  parser.add_argument('checkpoint', type=parse_existing_file)
+  parser.add_argument('directory', type=parse_existing_directory)
   parser.add_argument('--sigma', type=float, default=1.0)
   parser.add_argument('--denoiser-strength', type=float, default=0.0005)
   parser.add_argument('--custom-seed', type=int, default=None)
