@@ -9,7 +9,7 @@ from waveglow_cli.defaults import DEFAULT_WAVEGLOW_VERSION
 
 def init_download_parser(parser: ArgumentParser) -> None:
   parser.add_argument('checkpoint', type=parse_path)
-  parser.add_argument('--version', type=int, default=DEFAULT_WAVEGLOW_VERSION)
+  parser.add_argument('--ver', type=int, choices=[1, 2, 3, 4, 5], default=DEFAULT_WAVEGLOW_VERSION, help="version")
   return dl_pretrained
 
 
@@ -18,7 +18,7 @@ def dl_pretrained(ns: Namespace) -> None:
 
   dl_wg(
     destination=ns.checkpoint,
-    version=ns.version
+    version=ns.ver
   )
 
   checkpoint = convert_glow(
