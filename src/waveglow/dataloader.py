@@ -6,11 +6,10 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-from waveglow.typing import Entries
-
 from waveglow.audio_utils import get_wav_tensor_segment
 from waveglow.hparams import HParams
 from waveglow.taco_stft import TacotronSTFT
+from waveglow.typing import Entries
 
 
 class MelLoader(Dataset):

@@ -5,11 +5,11 @@ from tempfile import gettempdir
 from typing import Optional
 
 from general_utils import split_hparams_string
+
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import train
 from waveglow.utils import (get_custom_or_last_checkpoint, get_last_checkpoint,
                             prepare_logger)
-
 from waveglow_cli.argparse_helper import (get_optional,
                                           parse_existing_directory,
                                           parse_existing_file, parse_non_empty,
