@@ -11,20 +11,17 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from waveglow.checkpoint import Checkpoint, get_iteration
-from waveglow.dataloader import (parse_batch, prepare_trainloader,
-                                 prepare_valloader)
+from waveglow.dataloader import parse_batch, prepare_trainloader, prepare_valloader
 from waveglow.hparams import ExperimentHParams, HParams, OptimizerHParams
 from waveglow.logger import WaveglowLogger
 from waveglow.model import WaveGlow
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.typing import Entries
-from waveglow.utils import (SaveIterationSettings, check_save_it,
-                            copy_state_dict, get_continue_batch_iteration,
-                            get_continue_epoch, get_formatted_current_total,
-                            get_pytorch_filename, init_cuddn,
+from waveglow.utils import (SaveIterationSettings, check_save_it, copy_state_dict,
+                            get_continue_batch_iteration, get_continue_epoch,
+                            get_formatted_current_total, get_pytorch_filename, init_cuddn,
                             init_cuddn_benchmark, init_torch_seed, log_hparams,
-                            overwrite_custom_hparams, skip_batch,
-                            validate_model)
+                            overwrite_custom_hparams, skip_batch, validate_model)
 
 
 class WaveGlowLoss(torch.nn.Module):
@@ -216,7 +213,7 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
 
       wg_logger.log_training(reduced_loss, hparams.learning_rate, duration, iteration)
 
-      wg_logger.add_scalar('training_loss', reduced_loss, iteration)
+      #wg_logger.add_scalar('training_loss', reduced_loss, iteration)
 
       save_it = check_save_it(epoch, iteration, save_it_settings)
       if save_it:

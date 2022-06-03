@@ -7,6 +7,7 @@ import imageio
 import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
+
 from waveglow.audio_utils import float_to_wav
 from waveglow.image_utils import stack_images_vertically
 from waveglow.model_checkpoint import CheckpointWaveglow
@@ -15,7 +16,6 @@ from waveglow.utils import (get_checkpoint, get_last_checkpoint,
                             prepare_logger, split_hparams_string)
 from waveglow.validation import (ValidationEntries, ValidationEntryOutput,
                                  get_df, validate)
-
 from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction,
                                           ConvertToSetAction, get_optional,
                                           parse_existing_directory,
@@ -114,7 +114,7 @@ def validate_ns(ns: Namespace) -> bool:
   iterations: OrderedSet[int]
 
   if len(ns.custom_checkpoints) == 0:
-    _, last_it = get_last_checkpoint(ns.checkpoint_dir)
+    _, last_it = get_last_checkpoint(ns.checkpoints_dir)
     iterations = OrderedSet((last_it,))
   else:
     iterations = ns.custom_checkpoints
@@ -130,7 +130,7 @@ def validate_ns(ns: Namespace) -> bool:
 
   for iteration in tqdm(sorted(iterations)):
     logger.info(f"Current checkpoint: {iteration}")
-    checkpoint_path = get_checkpoint(ns.checkpoint_dir, iteration)
+    checkpoint_path = get_checkpoint(ns.checkpoints_dir, iteration)
     taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
     save_callback = partial(save_results, val_dir=ns.output_dir, iteration=iteration)
 

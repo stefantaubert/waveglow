@@ -7,7 +7,8 @@ from dataclasses import asdict, dataclass
 from logging import Logger
 from math import floor
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Set, Tuple, TypeVar, Union
+from typing import (Dict, Generator, List, Optional, Set, Tuple, Type, TypeVar,
+                    Union)
 
 import numpy as np
 import torch

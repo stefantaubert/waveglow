@@ -11,6 +11,7 @@ import torch
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
+
 from waveglow.audio_utils import (float_to_wav, get_duration_s, normalize_wav,
                                   plot_melspec_np)
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
@@ -21,7 +22,6 @@ from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.utils import cosine_dist_mels, get_all_files_in_all_subfolders
-
 from waveglow_cli.argparse_helper import (parse_existing_directory,
                                           parse_existing_file,
                                           parse_float_between_zero_and_one,
@@ -107,7 +107,7 @@ def infer_mels(ns: Namespace) -> bool:
     logger.debug(f"Loading mel from {mel_path} ...")
     mel = np.load(mel_path)
     mel_var = mel_to_torch(mel)
-    del mel
+    #del mel
     #mel_var = torch.autograd.Variable(mel_torch)
     mel_var = mel_var.unsqueeze(0)
     logger.debug("Inferring mel...")
@@ -137,7 +137,7 @@ def infer_mels(ns: Namespace) -> bool:
         seed=seed,
       )
 
-      mel_orig = mel_var
+      mel_orig = mel
 
       wav_inferred_denoised_normalized_tensor = torch.FloatTensor(wav_inferred_denoised_normalized)
       mel_inferred_denoised = taco_stft.get_mel_tensor(wav_inferred_denoised_normalized_tensor)

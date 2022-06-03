@@ -12,11 +12,9 @@ from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
 
-from waveglow.audio_utils import (get_duration_s, normalize_wav,
-                                  plot_melspec_np, wav_to_float32)
+from waveglow.audio_utils import get_duration_s, normalize_wav, plot_melspec_np, wav_to_float32
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
-from waveglow.image_utils import (calculate_structual_similarity_np,
-                                  make_same_width_by_filling_white)
+from waveglow.image_utils import calculate_structual_similarity_np, make_same_width_by_filling_white
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
@@ -59,7 +57,9 @@ def get_df(entries: ValidationEntries) -> DataFrame:
 
   data = [
     {
-      "Id": entry.entry.identifier,
+      # "Id": entry.entry.identifier,
+      "Name": entry.entry.basename,
+      "Subpath": entry.entry.stem,
       "Timepoint": f"{entry.timepoint:%Y/%m/%d %H:%M:%S}",
       "Iteration": entry.iteration,
       "Seed": entry.seed,
@@ -124,22 +124,22 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Optional[Set[str]], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: int, logger: Logger) -> None:
+def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: int, logger: Logger) -> None:
   validation_entries = ValidationEntries()
 
   if full_run:
     entries = data
-  elif entry_names is not None:
-    entries = [x for x in data if x.basename in entry_names]
-    if len(entries) != len(entry_names):
-      logger.error("Not all entry name's were found!")
-      assert False
-  else:
+  elif len(entry_names) == 0:
     assert seed is not None
     assert len(data) > 0
     random.seed(seed)
     entry = random.choice(data)
     entries = [entry]
+  else:
+    entries = [x for x in data if x.basename in entry_names]
+    if len(entries) != len(entry_names):
+      logger.error("Not all entry name's were found!")
+      assert False
 
   if len(entries) == 0:
     logger.info("Nothing to synthesize!")
@@ -261,10 +261,10 @@ def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Opti
     )
     validation_entry_output.mel_denoised_diff_img = mel_denoised_diff_img
 
-    imageio.imsave(Path("/tmp/mel_original_img_raw.png"), mel_original_img_raw)
-    imageio.imsave(Path("/tmp/mel_inferred_img_raw.png"), mel_inferred_denoised_img_raw)
-    imageio.imsave(Path("/tmp/mel_difference_denoised_img_raw.png"),
-                   mel_difference_denoised_img_raw)
+    # imageio.imsave(Path("/tmp/mel_original_img_raw.png"), mel_original_img_raw)
+    # imageio.imsave(Path("/tmp/mel_inferred_img_raw.png"), mel_inferred_denoised_img_raw)
+    # imageio.imsave(Path("/tmp/mel_difference_denoised_img_raw.png"),
+    #                mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
     logger.info(f"Current: {val_entry.entry.stem}")

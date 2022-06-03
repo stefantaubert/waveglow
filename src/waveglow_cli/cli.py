@@ -13,8 +13,7 @@ from typing import Callable, Generator, List, Tuple
 from waveglow_cli.argparse_helper import get_optional, parse_path
 from waveglow_cli.dl import init_download_parser
 from waveglow_cli.inference_v2 import init_inference_v2_parser
-from waveglow_cli.logging_configuration import (configure_root_logger,
-                                                get_file_logger,
+from waveglow_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                 try_init_file_logger)
 from waveglow_cli.training import init_continue_train_parser, init_train_parser
 from waveglow_cli.validation import init_validate_parser

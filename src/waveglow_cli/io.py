@@ -1,13 +1,13 @@
-import datetime
 import logging
 import os
 from pathlib import Path
 from shutil import copyfile
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict
 
 import imageio
 import matplotlib.pylab as plt
 import numpy as np
+
 from waveglow.audio_utils import float_to_wav, plot_melspec
 from waveglow.image_utils import (calculate_structual_similarity,
                                   stack_images_vertically)

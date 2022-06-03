@@ -6,13 +6,10 @@ from typing import Optional
 
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import train
-from waveglow.utils import (get_custom_or_last_checkpoint, get_last_checkpoint,
-                            prepare_logger, split_hparams_string)
-
-from waveglow_cli.argparse_helper import (get_optional,
-                                          parse_existing_directory,
-                                          parse_existing_file, parse_non_empty,
-                                          parse_path)
+from waveglow.utils import (get_custom_or_last_checkpoint, get_last_checkpoint, prepare_logger,
+                            split_hparams_string)
+from waveglow_cli.argparse_helper import (get_optional, parse_existing_directory,
+                                          parse_existing_file, parse_non_empty, parse_path)
 from waveglow_cli.io import get_checkpoints_dir, get_train_dir
 from waveglow_cli.parser import load_dataset
 
@@ -46,6 +43,7 @@ def init_train_parser(parser: ArgumentParser) -> None:
 
 
 def train_ns(ns: Namespace) -> bool:
+  ns.log_path.parent.mkdir(parents=True, exist_ok=True)
   logger = prepare_logger(ns.log_path, reset=True)
 
   warm_model = None
@@ -86,7 +84,7 @@ def init_continue_train_parser(parser: ArgumentParser) -> None:
 
 
 def continue_train_ns(ns: Namespace) -> bool:
-  logger = prepare_logger(ns.log_path, reset=True)
+  logger = prepare_logger(ns.log_path, reset=False)
 
   trainset = load_dataset(ns.train_folder)
   valset = load_dataset(ns.val_folder)
