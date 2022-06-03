@@ -82,34 +82,34 @@ def get_wav_out_dict(name: str, root_dir: Path, wav_info_dict: Dict[str, Any]) -
 
   return info_json
 
-# def save_trainset(train_dir: Path, dataset: PreparedDataList):
+# def save_trainset(train_dir: Path, dataset: Entries):
 #   path = train_dir / _train_csv
 #   dataset.save(path)
 
 
-# def load_trainset(train_dir: Path) -> PreparedDataList:
+# def load_trainset(train_dir: Path) -> Entries:
 #   path = train_dir / _train_csv
-#   return PreparedDataList.load(PreparedData, path)
+#   return Entries.load(PreparedData, path)
 
 
-# def save_testset(train_dir: Path, dataset: PreparedDataList):
+# def save_testset(train_dir: Path, dataset: Entries):
 #   path = train_dir / _test_csv
 #   dataset.save(path)
 
 
-# def load_testset(train_dir: Path) -> PreparedDataList:
+# def load_testset(train_dir: Path) -> Entries:
 #   path = train_dir / _test_csv
-#   return PreparedDataList.load(PreparedData, path)
+#   return Entries.load(PreparedData, path)
 
 
-# def save_valset(train_dir: Path, dataset: PreparedDataList):
+# def save_valset(train_dir: Path, dataset: Entries):
 #   path = train_dir / _val_csv
 #   dataset.save(path)
 
 
-# def load_valset(train_dir: Path) -> PreparedDataList:
+# def load_valset(train_dir: Path) -> Entries:
 #   path = train_dir / _val_csv
-#   return PreparedDataList.load(PreparedData, path)
+#   return Entries.load(PreparedData, path)
 
 
 def load_prep_settings(train_dir: Path) -> Tuple[Path, str, str]:

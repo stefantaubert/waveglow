@@ -1,12 +1,13 @@
-from general_utils import split_hparams_string, split_int_set_str
 import datetime
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from functools import partial
 from pathlib import Path
 from typing import Dict, Optional, Set
 
 import imageio
 import numpy as np
+from general_utils import split_hparams_string, split_int_set_str
+from ordered_set import OrderedSet
 from tqdm import tqdm
 from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
                              load_testset, load_valset)
@@ -20,10 +21,18 @@ from waveglow.utils import (get_all_checkpoint_iterations, get_checkpoint,
                             get_last_checkpoint, prepare_logger)
 from waveglow.validation import get_df
 
+from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction,
+                                          ConvertToSetAction, get_optional,
+                                          parse_existing_directory, parse_float_between_zero_and_one,
+                                          parse_non_empty,
+                                          parse_non_negative_float,
+                                          parse_non_negative_integer,
+                                          parse_path, parse_positive_integer)
 from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
                                    DEFAULT_SIGMA)
 from waveglow_cli.io import (_get_validation_root_dir, get_checkpoints_dir,
                              get_train_dir, load_prep_settings)
+from waveglow_cli.parser import load_dataset
 
 
 def get_repr_entries(entry_ids: Optional[Set[int]]) -> str:
@@ -40,14 +49,14 @@ def get_repr_speaker(speaker: Optional[str]) -> str:
   return speaker
 
 
-def get_val_dir(train_dir: Path, ds: str, iterations: Set[int], full_run: bool, entry_ids: Optional[Set[int]]) -> Path:
-  if len(iterations) > 3:
-    its = ",".join(str(x) for x in sorted(iterations)[:3]) + ",..."
-  else:
-    its = ",".join(str(x) for x in sorted(iterations))
+# def get_val_dir(train_dir: Path, ds: str, iterations: Set[int], full_run: bool, entry_ids: Optional[Set[int]]) -> Path:
+#   if len(iterations) > 3:
+#     its = ",".join(str(x) for x in sorted(iterations)[:3]) + ",..."
+#   else:
+#     its = ",".join(str(x) for x in sorted(iterations))
 
-  subdir_name = f"{datetime.datetime.now():%d.%m.%Y__%H-%M-%S}__ds={ds}__entries={get_repr_entries(entry_ids)}__its={its}__full={full_run}"
-  return _get_validation_root_dir(train_dir) / subdir_name
+#   subdir_name = f"{datetime.datetime.now():%d.%m.%Y__%H-%M-%S}__ds={ds}__entries={get_repr_entries(entry_ids)}__its={its}__full={full_run}"
+#   return _get_validation_root_dir(train_dir) / subdir_name
 
 
 def get_val_entry_dir(val_dir: Path, entry: PreparedData, iteration: int) -> Path:
@@ -85,158 +94,70 @@ def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: Pa
   )
 
 
-def init_validate_generic_parser(parser: ArgumentParser) -> None:
-  parser.add_argument('--train_name', type=str, required=True)
-  parser.add_argument('--ttsp_dir', type=Path, required=True)
-  parser.add_argument('--merge_name', type=str, required=True)
-  parser.add_argument('--prep_name', type=str, required=True)
-  parser.add_argument('--entry_ids', type=str, help="Utterance id or nothing if random")
-  parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
-                      choices=["val", "test", "total"], default="val")
-  parser.add_argument('--custom_checkpoints', type=str)
-  parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
-                      type=float, help='Removes model bias.')
-  parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
-  parser.add_argument('--custom_hparams', type=str)
-  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
-  parser.add_argument('--full_run', action="store_true")
-  return validate_generic_cli
-
-
-def validate_generic_cli(**args) -> None:
-  args["entry_ids"] = split_int_set_str(args["entry_ids"])
-  args["custom_checkpoints"] = split_int_set_str(args["custom_checkpoints"])
-  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  validate_generic(**args)
-
-
-def validate_generic(base_dir: Path, ttsp_dir: Path, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED) -> None:
-  train_dir = get_train_dir(base_dir, train_name)
-  assert train_dir.is_dir()
-
-  merge_dir = get_merged_dir(ttsp_dir, merge_name)
-  prep_dir = get_prep_dir(merge_dir, prep_name)
-
-  _validate(
-    train_dir=train_dir,
-    train_name=train_name,
-    prep_dir=prep_dir,
-    entry_ids=entry_ids,
-    custom_checkpoints=custom_checkpoints,
-    sigma=sigma,
-    denoiser_strength=denoiser_strength,
-    custom_hparams=custom_hparams,
-    full_run=full_run,
-    ds=ds,
-    seed=seed,
-  )
-
-
 def init_validate_parser(parser: ArgumentParser) -> None:
-  parser.add_argument('--train_name', type=str, required=True)
-  parser.add_argument('--entry_ids', type=str, help="Utterance id or nothing if random")
-  parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
-                      choices=["val", "test"], default="val")
-  parser.add_argument('--custom_checkpoints', type=str)
-  parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
-                      type=float, help='Removes model bias.')
-  parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
-  parser.add_argument('--custom_hparams', type=str)
-  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
-  parser.add_argument('--full_run', action="store_true")
-  return validate_cli
+  parser.add_argument('checkpoints_dir',
+                      metavar="CHECKPOINTS-FOLDER-PATH", type=parse_existing_directory)
+  parser.add_argument('output_dir',
+                      metavar="OUTPUT-FOLDER-PATH", type=parse_path)
+  parser.add_argument('dataset_dir', metavar="DATA-FOLDER-PATH",
+                      type=parse_existing_directory, help="train or val set folder")
+  parser.add_argument('--entry-names', type=parse_non_empty, nargs="*",
+                      help="Utterance names or nothing if random", default={}, action=ConvertToSetAction)
+  parser.add_argument('--custom-checkpoints',
+                      type=parse_positive_integer, nargs="*", default={}, action=ConvertToOrderedSetAction)
+  parser.add_argument("--denoiser-strength", default=DEFAULT_DENOISER_STRENGTH,
+                      type=parse_float_between_zero_and_one, help='Removes model bias.')
+  parser.add_argument("--sigma", type=parse_float_between_zero_and_one, default=DEFAULT_SIGMA)
+  parser.add_argument('--custom-hparams', type=get_optional(parse_non_empty),
+                      default=None, help="custom hparams comma separated")
+  parser.add_argument('--seed', type=parse_non_negative_integer, default=DEFAULT_SEED)
+  parser.add_argument('--full-run', action='store_true')
+  return validate_ns
 
 
-def validate_cli(**args) -> None:
-  args["entry_ids"] = split_int_set_str(args["entry_ids"])
-  args["custom_checkpoints"] = split_int_set_str(args["custom_checkpoints"])
-  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
-  validate(**args)
+def validate_ns(ns: Namespace) -> bool:
+  data = load_dataset(ns.dataset_dir)
 
+  iterations: OrderedSet[int]
 
-def validate(base_dir: Path, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED) -> None:
-  train_dir = get_train_dir(base_dir, train_name)
-  assert train_dir.is_dir()
-
-  ttsp_dir, merge_name, prep_name = load_prep_settings(train_dir)
-  merge_dir = get_merged_dir(ttsp_dir, merge_name)
-  prep_dir = get_prep_dir(merge_dir, prep_name)
-
-  _validate(
-    train_dir=train_dir,
-    train_name=train_name,
-    prep_dir=prep_dir,
-    entry_ids=entry_ids,
-    custom_checkpoints=custom_checkpoints,
-    sigma=sigma,
-    denoiser_strength=denoiser_strength,
-    custom_hparams=custom_hparams,
-    full_run=full_run,
-    ds=ds,
-    seed=seed,
-  )
-
-
-def _validate(train_dir, train_name: str, prep_dir: Path, entry_ids: Optional[Set[int]], custom_checkpoints: Optional[Set[int]], sigma: float, denoiser_strength: float, custom_hparams: Optional[Dict[str, str]], full_run: bool, ds: str, seed: int) -> None:
-  if ds == "val":
-    data = load_valset(prep_dir)
-  elif ds == "test":
-    data = load_testset(prep_dir)
-  elif ds == "total":
-    data = load_totalset(prep_dir)
+  if len(ns.custom_checkpoints) == 0:
+    _, last_it = get_last_checkpoint(ns.checkpoint_dir)
+    iterations = OrderedSet((last_it,))
   else:
-    raise Exception()
+    iterations = ns.custom_checkpoints
 
-  iterations: Set[int] = set()
-  checkpoint_dir = get_checkpoints_dir(train_dir)
-
-  if custom_checkpoints is None:
-    _, last_it = get_last_checkpoint(checkpoint_dir)
-    iterations.add(last_it)
-  else:
-    if len(custom_checkpoints) == 0:
-      iterations = set(get_all_checkpoint_iterations(checkpoint_dir))
-    else:
-      iterations = custom_checkpoints
-
-  val_dir = get_val_dir(
-    train_dir=train_dir,
-    ds=ds,
-    entry_ids=entry_ids,
-    full_run=full_run,
-    iterations=iterations,
-  )
-
-  val_dir.mkdir(parents=True, exist_ok=True)
-  val_log_path = val_dir / "log.txt"
+  ns.output_dir.mkdir(parents=True, exist_ok=True)
+  val_log_path = ns.output_dir / "log.txt"
   logger = prepare_logger(val_log_path)
   logger.info("Validating...")
   logger.info(f"Checkpoints: {','.join(str(x) for x in sorted(iterations))}")
 
   result = ValidationEntries()
+  custom_hparams = split_hparams_string(ns.custom_hparams)
 
   for iteration in tqdm(sorted(iterations)):
     logger.info(f"Current checkpoint: {iteration}")
-    checkpoint_path = get_checkpoint(checkpoint_dir, iteration)
+    checkpoint_path = get_checkpoint(ns.checkpoint_dir, iteration)
     taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
-    save_callback = partial(save_results, val_dir=val_dir, iteration=iteration)
+    save_callback = partial(save_results, val_dir=ns.output_dir, iteration=iteration)
 
     validation_entries = validate_core(
       checkpoint=taco_checkpoint,
       data=data,
       custom_hparams=custom_hparams,
-      entry_ids=entry_ids,
-      full_run=full_run,
-      train_name=train_name,
+      entry_names=ns.entry_names,
+      full_run=ns.full_run,
       save_callback=save_callback,
       logger=logger,
-      sigma=sigma,
-      denoiser_strength=denoiser_strength,
-      seed=seed,
+      sigma=ns.sigma,
+      denoiser_strength=ns.denoiser_strength,
+      seed=ns.seed,
     )
 
     result.extend(validation_entries)
 
   if len(result) > 0:
-    save_stats(val_dir, result)
-    logger.info(f"Saved output to: {val_dir}")
+    save_stats(ns.output_dir, result)
+    logger.info(f"Saved output to: {ns.output_dir.absolute()}")
+
+  return True

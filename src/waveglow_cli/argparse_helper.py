@@ -113,6 +113,13 @@ def parse_non_negative_float(value: str) -> float:
   return value
 
 
+def parse_float_between_zero_and_one(value: str) -> float:
+  value = parse_float(value)
+  if not 0 <= value <= 1:
+    raise ArgumentTypeError("Value needs to be in interval [0, 1]!")
+  return value
+
+
 def parse_integer(value: str) -> int:
   value = parse_required(value)
   if not value.isdigit():

@@ -10,7 +10,6 @@ from torch import nn
 from torch.nn import Parameter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from tts_preparation import PreparedDataList
 
 from waveglow.checkpoint import Checkpoint, get_iteration
 from waveglow.dataloader import (parse_batch, prepare_trainloader,
@@ -19,6 +18,7 @@ from waveglow.hparams import ExperimentHParams, HParams, OptimizerHParams
 from waveglow.logger import WaveglowLogger
 from waveglow.model import WaveGlow
 from waveglow.model_checkpoint import CheckpointWaveglow
+from waveglow.typing import Entries
 from waveglow.utils import (SaveIterationSettings, check_save_it,
                             copy_state_dict, get_continue_batch_iteration,
                             get_continue_epoch, get_formatted_current_total,
@@ -76,37 +76,6 @@ def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, ite
   return avg_val_loss
 
 
-def continue_train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: Path, debug_logger) -> None:
-  debug_logger.info("Continuing training...")
-  last_checkpoint_path, _ = get_last_checkpoint(save_checkpoint_dir)
-
-  _train(
-    custom_hparams=custom_hparams,
-    logdir=logdir,
-    trainset=trainset,
-    valset=valset,
-    save_checkpoint_dir=save_checkpoint_dir,
-    checkpoint=CheckpointWaveglow.load(last_checkpoint_path, debug_logger),
-    logger=debug_logger,
-    warm_model=None,
-  )
-
-
-def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: Path, debug_logger: Logger, warm_model: Optional[CheckpointWaveglow]) -> None:
-  debug_logger.info("Starting new training...")
-
-  _train(
-    custom_hparams=custom_hparams,
-    logdir=logdir,
-    trainset=trainset,
-    valset=valset,
-    save_checkpoint_dir=save_checkpoint_dir,
-    checkpoint=None,
-    logger=debug_logger,
-    warm_model=warm_model,
-  )
-
-
 def init_torch(hparams: ExperimentHParams) -> None:
   init_torch_seed(hparams.seed)
   init_cuddn(hparams.cudnn_enabled)
@@ -121,7 +90,7 @@ def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow) -> None:
   )
 
 
-def _train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: PreparedDataList, valset: PreparedDataList, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow]) -> None:
+def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entries, valset: Entries, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow]) -> None:
   complete_start = time.time()
   wg_logger = WaveglowLogger(logdir)
 

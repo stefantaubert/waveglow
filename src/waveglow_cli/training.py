@@ -12,7 +12,7 @@ from waveglow import CheckpointWaveglow
 from waveglow import continue_train as continue_train_core
 from waveglow import train as train_core
 from waveglow.logger import WaveglowLogger
-from waveglow.train import _train
+from waveglow.train import train
 from waveglow.utils import (get_custom_or_last_checkpoint, get_last_checkpoint,
                             prepare_logger)
 
@@ -51,10 +51,10 @@ def init_train_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--tl-dir', type=parse_path, default=default_log_path)
   parser.add_argument('--log-path', type=parse_path,
                       default=default_log_path / "log.txt")
-  return train
+  return train_ns
 
 
-def train(ns: Namespace) -> None:
+def train_ns(ns: Namespace) -> bool:
   logger = prepare_logger(ns.log_path, reset=True)
 
   warm_model = None
@@ -66,7 +66,7 @@ def train(ns: Namespace) -> None:
 
   custom_hparams = split_hparams_string(ns.custom_hparams)
 
-  _train(
+  train(
     custom_hparams=custom_hparams,
     logdir=ns.tl_dir,
     trainset=trainset,
@@ -76,6 +76,8 @@ def train(ns: Namespace) -> None:
     logger=logger,
     warm_model=warm_model,
   )
+
+  return True
 
 
 def init_continue_train_parser(parser: ArgumentParser) -> None:
@@ -89,10 +91,10 @@ def init_continue_train_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--tl-dir', type=parse_path, default=default_log_path)
   parser.add_argument('--log-path', type=parse_path,
                       default=default_log_path / "log.txt")
-  return continue_train
+  return continue_train_ns
 
 
-def continue_train(ns: Namespace) -> None:
+def continue_train_ns(ns: Namespace) -> bool:
   logger = prepare_logger(ns.log_path, reset=True)
 
   trainset = load_dataset(ns.train_folder)
@@ -103,7 +105,7 @@ def continue_train(ns: Namespace) -> None:
   last_checkpoint_path, _ = get_last_checkpoint(ns.checkpoints_dir)
   checkpoint = CheckpointWaveglow.load(last_checkpoint_path, logger)
 
-  _train(
+  train(
     custom_hparams=custom_hparams,
     logdir=ns.tl_dir,
     trainset=trainset,
@@ -113,3 +115,5 @@ def continue_train(ns: Namespace) -> None:
     logger=logger,
     warm_model=None,
   )
+
+  return True

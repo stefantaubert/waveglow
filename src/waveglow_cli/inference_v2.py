@@ -1,5 +1,5 @@
 import random
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 from typing import Optional
@@ -14,69 +14,53 @@ from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import Synthesizer
 
 from waveglow_cli.argparse_helper import (parse_existing_directory,
-                                          parse_existing_file, parse_path)
+                                          parse_existing_file,
+                                          parse_float_between_zero_and_one,
+                                          parse_non_negative_float,
+                                          parse_non_negative_integer,
+                                          parse_path, parse_positive_integer)
+from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
+                                   DEFAULT_SIGMA)
 
 
 def init_inference_v2_parser(parser: ArgumentParser) -> None:
   parser.add_argument('checkpoint', type=parse_existing_file)
   parser.add_argument('directory', type=parse_existing_directory)
-  parser.add_argument('--sigma', type=float, default=1.0)
-  parser.add_argument('--denoiser-strength', type=float, default=0.0005)
-  parser.add_argument('--custom-seed', type=int, default=None)
-  parser.add_argument('--batch-size', type=int, default=64)
+  parser.add_argument("--denoiser-strength", default=DEFAULT_DENOISER_STRENGTH,
+                      type=parse_float_between_zero_and_one, help='Removes model bias.')
+  parser.add_argument("--sigma", type=parse_float_between_zero_and_one, default=DEFAULT_SIGMA)
+  parser.add_argument('--custom-seed', type=parse_non_negative_integer, default=None)
+  #parser.add_argument('--batch-size', type=parse_positive_integer, default=64)
   parser.add_argument('--include-stats', action="store_true")
-  parser.add_argument('-out', '--output-directory', type=Path)
+  parser.add_argument('-out', '--output-directory', type=parse_path)
   parser.add_argument('-o', '--overwrite', action="store_true")
   return infer_mels
 
 
-def infer_mels(base_dir: Path, checkpoint: Path, directory: Path, sigma: float, denoiser_strength: float, custom_seed: Optional[int], include_stats: bool, batch_size: int, output_directory: Optional[Path], overwrite: bool) -> bool:
+def infer_mels(ns: Namespace) -> bool:
   logger = getLogger(__name__)
 
-  if not checkpoint.is_file():
-    logger.error("Checkpoint was not found!")
-    return False
-
-  if not directory.is_dir():
-    logger.error("Directory was not found!")
-    return False
-
-  if not 0 <= sigma <= 1:
-    logger.error("Sigma needs to be in interval [0, 1]!")
-    return False
-
-  if not 0 <= denoiser_strength <= 1:
-    logger.error("Denoiser strength needs to be in interval [0, 1]!")
-    return False
-
-  if not batch_size > 0:
-    logger.error("Batch size need to be greater than zero!")
-    return False
-
+  output_directory = ns.output_directory
   if output_directory is None:
-    output_directory = directory
+    output_directory = ns.directory
   else:
     if output_directory.is_file():
       logger.error("Output directory is a file!")
       return False
 
-  if custom_seed is not None and not custom_seed >= 0:
-    logger.error("Custom seed needs to be greater than or equal to zero!")
-    return False
-
-  if custom_seed is not None:
-    seed = custom_seed
+  if ns.custom_seed is not None:
+    seed = ns.custom_seed
   else:
     seed = random.randint(1, 9999)
     logger.info(f"Using random seed: {seed}.")
 
   try:
-    checkpoint_inst = CheckpointWaveglow.load(checkpoint, logger)
+    checkpoint_inst = CheckpointWaveglow.load(ns.checkpoint, logger)
   except Exception as ex:
     logger.error("Checkpoint couldn't be loaded!")
     return False
 
-  all_files = get_all_files_in_all_subfolders(directory)
+  all_files = get_all_files_in_all_subfolders(ns.directory)
   all_mel_files = list(file for file in all_files if file.suffix.lower() == ".npy")
 
   synth = Synthesizer(
@@ -91,9 +75,9 @@ def infer_mels(base_dir: Path, checkpoint: Path, directory: Path, sigma: float, 
     for mel_path in all_mel_files:
       out_stem = f"{mel_path.name}"
       # out.npy.wav
-      wav_path = output_directory / mel_path.relative_to(directory).parent / f"{out_stem}.wav"
-      if wav_path.exists() and not overwrite:
-        logger.info(f"{mel_path.relative_to(directory)}: Skipped because it is already inferred!")
+      wav_path = output_directory / mel_path.relative_to(ns.directory).parent / f"{out_stem}.wav"
+      if wav_path.exists() and not ns.overwrite:
+        logger.info(f"{mel_path.relative_to(ns.directory)}: Skipped because it is already inferred!")
         continue
 
       logger.debug(f"Loading mel from {mel_path} ...")
@@ -103,7 +87,7 @@ def infer_mels(base_dir: Path, checkpoint: Path, directory: Path, sigma: float, 
       #mel_var = torch.autograd.Variable(mel_torch)
       mel_var = mel_var.unsqueeze(0)
       logger.debug("Inferring mel...")
-      inference_result = synth.infer(mel_var, sigma, denoiser_strength, seed)
+      inference_result = synth.infer(mel_var, ns.sigma, ns.denoiser_strength, seed)
       del mel_var
       wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 

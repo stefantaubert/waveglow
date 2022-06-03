@@ -11,7 +11,7 @@ import torch
 from general_utils import GenericList
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
-from tts_preparation import PreparedData, PreparedDataList
+from tqdm import tqdm
 
 from waveglow.audio_utils import (get_duration_s, normalize_wav,
                                   plot_melspec_np, wav_to_float32)
@@ -21,12 +21,13 @@ from waveglow.image_utils import (calculate_structual_similarity_np,
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
+from waveglow.typing import Entries, Entry
 from waveglow.utils import cosine_dist_mels
 
 
 @dataclass
 class ValidationEntry():
-  utterance: PreparedData = None
+  entry: Entry = None
   inference_result: InferenceResult = None
   seed: int = None
   #original_duration_s: float = None
@@ -34,7 +35,7 @@ class ValidationEntry():
   iteration: int = None
   inferred_duration_s: float = None
   timepoint: datetime.datetime = None
-  train_name: str = None
+  # train_name: str = None
   diff_frames: int = None
   mfcc_no_coeffs: int = None
   mfcc_dtw_mcd: float = None
@@ -59,23 +60,23 @@ def get_df(entries: ValidationEntries) -> DataFrame:
 
   data = [
     {
-      "Id": entry.utterance.identifier,
+      "Id": entry.entry.identifier,
       "Timepoint": f"{entry.timepoint:%Y/%m/%d %H:%M:%S}",
       "Iteration": entry.iteration,
       "Seed": entry.seed,
-      "Language": repr(entry.utterance.symbols_language),
-      "Symbols": ''.join(entry.utterance.symbols),
-      "Symbols format": repr(entry.utterance.symbols_format),
-      "Speaker": entry.utterance.speaker_name,
-      "Speaker Id": entry.utterance.speaker_id,
+      # "Language": repr(entry.entry.symbols_language),
+      # "Symbols": ''.join(entry.entry.symbols),
+      # "Symbols format": repr(entry.entry.symbols_format),
+      # "Speaker": entry.entry.speaker_name,
+      # "Speaker Id": entry.entry.speaker_id,
       "Sigma": entry.sigma,
       "Denoiser strength": entry.denoiser_strength,
       "Inference duration (s)": entry.inference_result.inference_duration_s,
       "Denoising duration (s)": entry.inference_result.denoising_duration_s,
       "Overamplified?": entry.inference_result.was_overamplified,
       "Inferred wav duration (s)": entry.inferred_duration_s,
-      "Original wav duration (s)": entry.utterance.wav_duration,
-      "Difference wav duration (s)": entry.inferred_duration_s - entry.utterance.wav_duration,
+      # "Original wav duration (s)": entry.entry.wav_duration,
+      # "Difference wav duration (s)": entry.inferred_duration_s - entry.entry.wav_duration,
       "# Difference frames": entry.diff_frames,
       "Sampling rate (Hz)": entry.inference_result.sampling_rate,
       "# MFCC Coefficients": entry.mfcc_no_coeffs,
@@ -87,17 +88,17 @@ def get_df(entries: ValidationEntries) -> DataFrame:
       "# Frames": entry.mcd_frames,
       "Cosine Similarity (Padded)": entry.cosine_similarity,
       "Structual Similarity (Padded)": entry.structural_similarity,
-      "1-gram rarity (total set)": entry.utterance.one_gram_rarity,
-      "2-gram rarity (total set)": entry.utterance.two_gram_rarity,
-      "3-gram rarity (total set)": entry.utterance.three_gram_rarity,
-      "Combined rarity (total set)": entry.utterance.one_gram_rarity + entry.utterance.two_gram_rarity + entry.utterance.three_gram_rarity,
-      "# Symbols": len(entry.utterance.symbols),
-      "Unique symbols": ' '.join(sorted(set(entry.utterance.symbols))),
-      "# Unique symbols": len(set(entry.utterance.symbols)),
-      "Train name": entry.train_name,
-      "Ds-Id": entry.utterance.ds_entry_id,
-      "Wav path original": str(entry.utterance.wav_original_absolute_path),
-      "Wav path": str(entry.utterance.wav_absolute_path),
+      # "1-gram rarity (total set)": entry.entry.one_gram_rarity,
+      # "2-gram rarity (total set)": entry.entry.two_gram_rarity,
+      # "3-gram rarity (total set)": entry.entry.three_gram_rarity,
+      # "Combined rarity (total set)": entry.entry.one_gram_rarity + entry.entry.two_gram_rarity + entry.entry.three_gram_rarity,
+      # "# Symbols": len(entry.entry.symbols),
+      # "Unique symbols": ' '.join(sorted(set(entry.entry.symbols))),
+      # "# Unique symbols": len(set(entry.entry.symbols)),
+      # "Train name": entry.train_name,
+      # "Ds-Id": entry.entry.ds_entry_id,
+      # "Wav path original": str(entry.entry.wav_original_absolute_path),
+      "Wav path": str(entry.entry.wav_absolute_path),
     }
     for entry in entries.items()
   ]
@@ -124,22 +125,22 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_ids: Optional[Set[int]], train_name: str, full_run: bool, save_callback: Callable[[PreparedData, ValidationEntryOutput], None], seed: int, logger: Logger) -> None:
+def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Optional[Set[str]], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: int, logger: Logger) -> None:
   validation_entries = ValidationEntries()
 
   if full_run:
     entries = data
-  elif entry_ids is not None:
-    entries = PreparedDataList([x for x in data.items() if x.entry_id in entry_ids])
-    if len(entries) != len(entry_ids):
-      logger.error("Not all entry_id's were found!")
+  elif entry_names is not None:
+    entries = [x for x in data if x.basename in entry_names]
+    if len(entries) != len(entry_names):
+      logger.error("Not all entry name's were found!")
       assert False
   else:
     assert seed is not None
     assert len(data) > 0
     random.seed(seed)
     entry = random.choice(data)
-    entries = PreparedDataList([entry])
+    entries = [entry]
 
   if len(entries) == 0:
     logger.info("Nothing to synthesize!")
@@ -153,7 +154,8 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
 
   taco_stft = TacotronSTFT(synth.hparams, logger=logger)
 
-  for entry in entries.items(True):
+  entry: Entry
+  for entry in tqdm(entries):
     mel = taco_stft.get_mel_tensor_from_file(entry.wav_absolute_path)
     mel_var = torch.autograd.Variable(mel)
     mel_var = mel_var.cuda()
@@ -170,12 +172,11 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
     val_entry = ValidationEntry(
-      utterance=entry,
+      entry=entry,
       inference_result=inference_result,
       seed=seed,
       iteration=checkpoint.iteration,
       timepoint=timepoint,
-      train_name=train_name,
       inferred_duration_s=get_duration_s(
         inference_result.wav_denoised, inference_result.sampling_rate),
       denoiser_strength=denoiser_strength,
@@ -183,7 +184,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
       mfcc_no_coeffs=MCD_NO_OF_COEFFS_PER_FRAME,
     )
 
-    val_entry.diff_duration_s = val_entry.inferred_duration_s - val_entry.utterance.wav_duration
+    # val_entry.diff_duration_s = val_entry.inferred_duration_s - val_entry.entry.wav_duration
 
     mel_orig = mel.cpu().numpy()
 
@@ -267,7 +268,7 @@ def validate(checkpoint: CheckpointWaveglow, data: PreparedDataList, custom_hpar
                    mel_difference_denoised_img_raw)
 
     # logger.info(val_entry)
-    logger.info(f"Current: {val_entry.utterance.entry_id}")
+    logger.info(f"Current: {val_entry.entry.stem}")
     logger.info(f"MCD DTW: {val_entry.mfcc_dtw_mcd}")
     logger.info(f"MCD DTW penalty: {val_entry.mfcc_dtw_penalty}")
     logger.info(f"MCD DTW frames: {val_entry.mfcc_dtw_frames}")

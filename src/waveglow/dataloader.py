@@ -5,11 +5,12 @@ from typing import Tuple
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-from tts_preparation import PreparedDataList
-from waveglow.audio_utils import get_wav_tensor_segment
 
-from waveglow.taco_stft import TacotronSTFT
+from waveglow.typing import Entries
+
+from waveglow.audio_utils import get_wav_tensor_segment
 from waveglow.hparams import HParams
+from waveglow.taco_stft import TacotronSTFT
 
 
 class MelLoader(Dataset):
@@ -18,17 +19,17 @@ class MelLoader(Dataset):
   spectrogram, audio pair.
   """
 
-  def __init__(self, prepare_ds_data: PreparedDataList, hparams: HParams, logger: Logger):
+  def __init__(self, prepare_ds_data: Entries, hparams: HParams, logger: Logger):
     self.taco_stft = TacotronSTFT(hparams, logger=logger)
     self.hparams = hparams
     self._logger = logger
 
-    data = prepare_ds_data
+    data = prepare_ds_data.copy()
     random.seed(hparams.seed)
     random.shuffle(data)
 
     wav_paths = {}
-    for i, values in enumerate(data.items()):
+    for i, values in enumerate(data):
       wav_paths[i] = values.wav_absolute_path
     self.wav_paths = wav_paths
 
@@ -60,9 +61,9 @@ def parse_batch(batch) -> Tuple[torch.autograd.Variable, torch.autograd.Variable
   return (mel, audio), (mel, audio)
 
 
-def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Logger) -> None:
-  logger.info(
-    f"Duration trainset {trainset.total_duration_s / 60:.2f}m / {trainset.total_duration_s / 60 / 60:.2f}h")
+def prepare_trainloader(hparams: HParams, trainset: Entries, logger: Logger) -> None:
+  # logger.info(
+  #   f"Duration trainset {trainset.total_duration_s / 60:.2f}m / {trainset.total_duration_s / 60 / 60:.2f}h")
 
   trn = MelLoader(trainset, hparams, logger)
 
@@ -82,9 +83,9 @@ def prepare_trainloader(hparams: HParams, trainset: PreparedDataList, logger: Lo
   return train_loader
 
 
-def prepare_valloader(hparams: HParams, valset: PreparedDataList, logger: Logger) -> None:
-  logger.info(
-    f"Duration valset {valset.total_duration_s / 60:.2f}m / {valset.total_duration_s / 60 / 60:.2f}h")
+def prepare_valloader(hparams: HParams, valset: Entries, logger: Logger) -> None:
+  # logger.info(
+  #   f"Duration valset {valset.total_duration_s / 60:.2f}m / {valset.total_duration_s / 60 / 60:.2f}h")
 
   val = MelLoader(valset, hparams, logger)
   val_sampler = None

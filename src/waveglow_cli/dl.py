@@ -1,44 +1,39 @@
 import shutil
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 
 from waveglow import convert_glow, dl_wg
 from waveglow.utils import get_pytorch_filename
 
+from waveglow_cli.argparse_helper import parse_path
 from waveglow_cli.defaults import DEFAULT_WAVEGLOW, DEFAULT_WAVEGLOW_VERSION
 from waveglow_cli.io import get_checkpoints_dir, get_train_dir
 
 
 def init_download_parser(parser: ArgumentParser) -> None:
-  parser.add_argument('--train_name', type=str, default=DEFAULT_WAVEGLOW)
+  parser.add_argument('checkpoint', type=parse_path)
   parser.add_argument('--version', type=int, default=DEFAULT_WAVEGLOW_VERSION)
   return dl_pretrained
 
 
-def dl_pretrained(base_dir: Path, train_name: str = DEFAULT_WAVEGLOW, version: int = DEFAULT_WAVEGLOW_VERSION) -> None:
-  train_dir = get_train_dir(base_dir, train_name)
-  assert train_dir.is_dir()
-  checkpoints_dir = get_checkpoints_dir(train_dir)
-  tmp_dest_path = checkpoints_dir / get_pytorch_filename("1")
+def dl_pretrained(ns: Namespace) -> None:
+  logger = getLogger(__name__)
 
   dl_wg(
-    destination=tmp_dest_path,
-    version=version
+    destination=ns.checkpoint,
+    version=ns.version
   )
 
   checkpoint = convert_glow(
-    origin=tmp_dest_path,
-    destination=tmp_dest_path,
+    origin=ns.checkpoint,
+    destination=ns.checkpoint,
     keep_orig=False
   )
 
-  final_dest_path = checkpoints_dir / get_pytorch_filename(checkpoint.iteration)
-  if tmp_dest_path != final_dest_path:
-    shutil.move(tmp_dest_path, final_dest_path)
+  assert checkpoint == ns.checkpoint
 
-  logger = getLogger(__name__)
-  logger.info(f"Completed. Downloaded to: {final_dest_path}")
+  logger.info(f"Completed. Downloaded to: {ns.checkpoint.absolute()}")
 
   # if prep_name is not None:
   # merge_dir = get_merged_dir(base_dir, merge_name, create=False)

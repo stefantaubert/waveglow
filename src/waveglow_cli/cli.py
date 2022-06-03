@@ -19,8 +19,7 @@ from waveglow_cli.logging_configuration import (configure_root_logger,
                                                 get_file_logger,
                                                 try_init_file_logger)
 from waveglow_cli.training import init_continue_train_parser, init_train_parser
-from waveglow_cli.validation import (init_validate_generic_parser,
-                                     init_validate_parser)
+from waveglow_cli.validation import init_validate_parser
 
 __version__ = version("waveglow")
 
@@ -44,7 +43,6 @@ def get_parsers() -> Parsers:
   yield "train", "train", init_train_parser
   yield "continue-train", "continue-train", init_continue_train_parser
   yield "validate", "validate", init_validate_parser
-  yield "validate-generic", "validate-generic", init_validate_generic_parser
   yield "infer", "infer", init_inference_parser
   yield "infer-mels", "infer-mels", init_inference_v2_parser
   yield "infer-json", "infer-json", init_inference_parse_json_parser
