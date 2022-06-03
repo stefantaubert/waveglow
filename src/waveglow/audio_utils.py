@@ -216,20 +216,6 @@ def wav_to_float32(path: str) -> Tuple[np.float, int]:
   return wav, sampling_rate
 
 
-def convert_wav(wav, to_dtype):
-  '''
-  if the wav is overamplified the result will also be overamplified.
-  '''
-  if wav.dtype != to_dtype:
-    wav = wav / (-1 * get_min_value(wav.dtype)) * get_max_value(to_dtype)
-    if to_dtype in (np.int16, np.int32):
-      # the default seems to be np.fix instead of np.round on wav.astype()
-      wav = np.round(wav, 0)
-    wav = wav.astype(to_dtype)
-
-  return wav
-
-
 def get_max_value(dtype):
   # see wavfile.write() max positive eg. on 16-bit PCM is 32767
   if dtype == np.int16:

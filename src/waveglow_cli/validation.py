@@ -6,7 +6,6 @@ from typing import Dict, Optional, Set
 
 import imageio
 import numpy as np
-from image_utils import stack_images_vertically
 from tqdm import tqdm
 from tts_preparation import (PreparedData, get_merged_dir, get_prep_dir,
                              load_testset, load_valset)
@@ -15,6 +14,7 @@ from waveglow import (CheckpointWaveglow, ValidationEntries,
                       ValidationEntryOutput)
 from waveglow import validate as validate_core
 from waveglow.audio_utils import float_to_wav
+from waveglow.image_utils import stack_images_vertically
 from waveglow.utils import (get_all_checkpoint_iterations, get_checkpoint,
                             get_last_checkpoint, prepare_logger)
 from waveglow.validation import get_df

@@ -9,9 +9,10 @@ import imageio
 import matplotlib.pylab as plt
 import numpy as np
 from general_utils import parse_json, save_json
-from image_utils import calculate_structual_similarity, stack_images_vertically
 from tts_preparation import PreparedData
 from waveglow.audio_utils import float_to_wav, plot_melspec
+from waveglow.image_utils import (calculate_structual_similarity,
+                                  stack_images_vertically)
 
 
 def get_train_dir(base_dir: Path, train_name: str) -> None:

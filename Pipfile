@@ -19,13 +19,13 @@ image-utils = {editable = true, path = "./../image-utils"}
 text-selection = {editable = true, path = "./../text-selection"}
 speech-dataset-preprocessing = {editable = true, path = "./../speech-dataset-preprocessing"}
 tts-preparation = {editable = true, path = "./../tts-preparation"}
-mcd = {editable = true, path = "./../mel_cepstral_distance"}
 pronunciation_dict_parser = {editable = true, path = "./../pronunciation_dict_parser"}
 g2p_en = {editable = true, path = "./../g2p"}
 sentence2pronunciation = {editable = true, path = "./../sentence2pronunciation"}
 speech-dataset-parser = ">=0.0.1"
 accent-analyser = {editable = true, path = "./../accent-analyser"}
 general-utils = {editable = true, path = "./../general-utils"}
+mel-cepstral-distance = ">=0.0.1"
 pandas = "*"
 librosa = "*"
 plotly = "*"

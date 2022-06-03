@@ -9,8 +9,6 @@ import imageio
 import numpy as np
 import torch
 from general_utils import GenericList
-from image_utils import (calculate_structual_similarity_np,
-                         make_same_width_by_filling_white)
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tts_preparation import PreparedData, PreparedDataList
@@ -18,6 +16,8 @@ from tts_preparation import PreparedData, PreparedDataList
 from waveglow.audio_utils import (get_duration_s, normalize_wav,
                                   plot_melspec_np, wav_to_float32)
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
+from waveglow.image_utils import (calculate_structual_similarity_np,
+                                  make_same_width_by_filling_white)
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT

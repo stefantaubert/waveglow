@@ -9,11 +9,11 @@ import imageio
 import numpy as np
 import regex as re
 from general_utils import parse_json, pass_lines_list, save_json
-from image_utils import stack_images_vertically
-from image_utils.main import stack_images_horizontally
 from waveglow import CheckpointWaveglow, InferenceEntries, InferenceEntryOutput
 from waveglow import infer as infer_core
 from waveglow.audio_utils import float_to_wav
+from waveglow.image_utils import (stack_images_horizontally,
+                                  stack_images_vertically)
 from waveglow.inference import InferMelEntry, get_df
 from waveglow.utils import get_custom_or_last_checkpoint, prepare_logger
 
