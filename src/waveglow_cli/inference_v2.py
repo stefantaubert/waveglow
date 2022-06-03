@@ -1,38 +1,31 @@
-import datetime
 import random
-from dataclasses import dataclass
-from functools import partial
-from logging import Logger, getLogger
+from argparse import ArgumentParser
+from logging import getLogger
 from pathlib import Path
-from shutil import copyfile
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Optional
 
-import imageio
 import numpy as np
-import regex as re
-import torch
-from general_utils import (get_all_files_in_all_subfolders, parse_json,
-                           pass_lines_list, save_json)
+from general_utils import get_all_files_in_all_subfolders
 from tqdm import tqdm
-from waveglow import CheckpointWaveglow, InferenceEntries, InferenceEntryOutput
-from waveglow import infer as infer_core
-from waveglow.audio_utils import (concatenate_audios, float_to_wav,
-                                  get_duration_s, normalize_wav)
-from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
-from waveglow.inference import InferMelEntry, get_df, mel_to_torch
+from waveglow import CheckpointWaveglow
+from waveglow.audio_utils import (float_to_wav, normalize_wav)
+from waveglow.inference import mel_to_torch
 from waveglow.model_checkpoint import CheckpointWaveglow
-from waveglow.synthesizer import InferenceResult, Synthesizer
-from waveglow.utils import (cosine_dist_mels, get_custom_or_last_checkpoint,
-                            prepare_logger)
+from waveglow.synthesizer import Synthesizer
 
-from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH,
-                                   DEFAULT_READ_MEL_INFO_PATH,
-                                   DEFAULT_SAVE_WAV_INFO_COPY_PATH,
-                                   DEFAULT_SEED, DEFAULT_SENTENCE_PAUSE_S,
-                                   DEFAULT_SIGMA)
-from waveglow_cli.io import (get_checkpoints_dir, get_inference_root_dir,
-                             get_train_dir, get_wav_info_dict,
-                             get_wav_out_dict)
+
+
+def init_inference_v2_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('checkpoint', type=Path)
+  parser.add_argument('directory', type=Path)
+  parser.add_argument('--sigma', type=float, default=1.0)
+  parser.add_argument('--denoiser-strength', type=float, default=0.0005)
+  parser.add_argument('--custom-seed', type=int, default=None)
+  parser.add_argument('--batch-size', type=int, default=64)
+  parser.add_argument('--include-stats', action="store_true")
+  parser.add_argument('-out', '--output-directory', type=Path)
+  parser.add_argument('-o', '--overwrite', action="store_true")
+  return infer_mels
 
 
 def infer_mels(base_dir: Path, checkpoint: Path, directory: Path, sigma: float, denoiser_strength: float, custom_seed: Optional[int], include_stats: bool, batch_size: int, output_directory: Optional[Path], overwrite: bool) -> bool:

@@ -1,4 +1,6 @@
+from general_utils import split_hparams_string, split_string
 import datetime
+from argparse import ArgumentParser
 from functools import partial
 from logging import getLogger
 from pathlib import Path
@@ -99,6 +101,25 @@ def mel_inferred_denoised_h_plot(infer_dir: Path, sentences: InferenceEntries) -
   stack_images_horizontally(paths, path)
 
 
+def init_inference_parse_json_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--json_path', type=str, default=DEFAULT_READ_MEL_INFO_PATH)
+  parser.add_argument('--custom_checkpoint', type=int)
+  parser.add_argument('--sigma', type=float, default=DEFAULT_SIGMA)
+  parser.add_argument('--denoiser_strength', type=float, default=DEFAULT_DENOISER_STRENGTH)
+  parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--no_concatenation', action="store_true")
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--fast', action="store_true")
+  return infer_parse_json_cli
+
+
+def infer_parse_json_cli(**args) -> None:
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  infer_parse_json(**args)
+
+
 def infer_parse_json(base_dir: Path, train_name: str, json_path: Path = DEFAULT_READ_MEL_INFO_PATH, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED, copy_wav_info_to: Optional[str] = DEFAULT_SAVE_WAV_INFO_COPY_PATH, fast: bool = False) -> None:
   logger = getLogger(__name__)
   if not json_path.is_file():
@@ -151,6 +172,27 @@ def infer_parse_json(base_dir: Path, train_name: str, json_path: Path = DEFAULT_
     train_name=train_name,
     fast=fast,
   )
+
+
+def init_inference_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--mel_paths', type=str, required=True)
+  parser.add_argument('--sampling_rate', type=int, default=22050)
+  parser.add_argument('--custom_checkpoint', type=int)
+  parser.add_argument('--sigma', type=float, default=DEFAULT_SIGMA)
+  parser.add_argument('--denoiser_strength', type=float, default=DEFAULT_DENOISER_STRENGTH)
+  parser.add_argument('--sentence_pause_s', type=float, default=DEFAULT_SENTENCE_PAUSE_S)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--no_concatenation', action="store_true")
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--fast', action="store_true")
+  return infer_cli
+
+
+def infer_cli(**args) -> None:
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  args["mel_paths"] = split_string(args["mel_paths"])
+  infer(**args)
 
 
 def infer(base_dir: Path, train_name: str, mel_paths: List[Path], sampling_rate: int, custom_checkpoint: Optional[int] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, sentence_pause_s: Optional[float] = DEFAULT_SENTENCE_PAUSE_S, custom_hparams: Optional[Dict[str, str]] = None, no_concatenation: bool = False, seed: int = DEFAULT_SEED, copy_wav_info_to: Optional[str] = DEFAULT_SAVE_WAV_INFO_COPY_PATH, fast: bool = False) -> None:

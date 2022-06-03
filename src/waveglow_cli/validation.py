@@ -1,5 +1,6 @@
+from general_utils import split_hparams_string, split_int_set_str
 import datetime
-import os
+from argparse import ArgumentParser
 from functools import partial
 from pathlib import Path
 from typing import Dict, Optional, Set
@@ -84,6 +85,31 @@ def save_results(entry: PreparedData, output: ValidationEntryOutput, val_dir: Pa
   )
 
 
+def init_validate_generic_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--ttsp_dir', type=Path, required=True)
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--entry_ids', type=str, help="Utterance id or nothing if random")
+  parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
+                      choices=["val", "test", "total"], default="val")
+  parser.add_argument('--custom_checkpoints', type=str)
+  parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
+                      type=float, help='Removes model bias.')
+  parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--full_run', action="store_true")
+  return validate_generic_cli
+
+
+def validate_generic_cli(**args) -> None:
+  args["entry_ids"] = split_int_set_str(args["entry_ids"])
+  args["custom_checkpoints"] = split_int_set_str(args["custom_checkpoints"])
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  validate_generic(**args)
+
+
 def validate_generic(base_dir: Path, ttsp_dir: Path, merge_name: str, prep_name: str, train_name: str, ds: str = "val", entry_ids: Optional[Set[int]] = None, custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED) -> None:
   train_dir = get_train_dir(base_dir, train_name)
   assert train_dir.is_dir()
@@ -104,6 +130,28 @@ def validate_generic(base_dir: Path, ttsp_dir: Path, merge_name: str, prep_name:
     ds=ds,
     seed=seed,
   )
+
+
+def init_validate_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--entry_ids', type=str, help="Utterance id or nothing if random")
+  parser.add_argument('--ds', type=str, help="Choose if validation- or testset should be taken.",
+                      choices=["val", "test"], default="val")
+  parser.add_argument('--custom_checkpoints', type=str)
+  parser.add_argument("--denoiser_strength", default=DEFAULT_DENOISER_STRENGTH,
+                      type=float, help='Removes model bias.')
+  parser.add_argument("--sigma", type=float, default=DEFAULT_SIGMA)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--seed', type=int, default=DEFAULT_SEED)
+  parser.add_argument('--full_run', action="store_true")
+  return validate_cli
+
+
+def validate_cli(**args) -> None:
+  args["entry_ids"] = split_int_set_str(args["entry_ids"])
+  args["custom_checkpoints"] = split_int_set_str(args["custom_checkpoints"])
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  validate(**args)
 
 
 def validate(base_dir: Path, train_name: str, entry_ids: Optional[Set[int]] = None, ds: str = "val", custom_checkpoints: Optional[Set[int]] = None, sigma: float = DEFAULT_SIGMA, denoiser_strength: float = DEFAULT_DENOISER_STRENGTH, custom_hparams: Optional[Dict[str, str]] = None, full_run: bool = False, seed: int = DEFAULT_SEED) -> None:

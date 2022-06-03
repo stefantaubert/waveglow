@@ -9,8 +9,11 @@ autopep8 = "*"
 pylint = "*"
 pycodestyle = "*"
 isort = "*"
-pipenv-setup = "*"
 rope = "*"
+pytest = "*"
+autoflake = "*"
+twine = "*"
+tox = "*"
 
 [packages]
 text-utils = {editable = true, path = "./../text-utils"}

@@ -1,4 +1,5 @@
-import os
+from argparse import ArgumentParser
+from general_utils import split_hparams_string
 from logging import Logger
 from pathlib import Path
 from typing import Dict, Optional
@@ -23,6 +24,22 @@ def try_load_checkpoint(base_dir: Path, train_name: Optional[str], checkpoint: O
       get_checkpoints_dir(train_dir), checkpoint)
     result = CheckpointWaveglow.load(checkpoint_path, logger)
   return result
+
+
+def init_train_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--ttsp_dir', type=Path, required=True)
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--custom_hparams', type=str)
+  parser.add_argument('--warm_start_train_name', type=str)
+  parser.add_argument('--warm_start_checkpoint', type=int)
+  return train_cli
+
+
+def train_cli(**args) -> None:
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  train(**args)
 
 
 def train(base_dir: Path, ttsp_dir: Path, train_name: str, merge_name: str, prep_name: str, custom_hparams: Optional[Dict[str, str]] = None, warm_start_train_name: Optional[str] = None, warm_start_checkpoint: Optional[int] = None) -> None:
@@ -61,6 +78,17 @@ def train(base_dir: Path, ttsp_dir: Path, train_name: str, merge_name: str, prep
     debug_logger=logger,
     warm_model=warm_model,
   )
+
+
+def init_continue_train_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--train_name', type=str, required=True)
+  parser.add_argument('--custom_hparams', type=str)
+  return continue_train_cli
+
+
+def continue_train_cli(**args) -> None:
+  args["custom_hparams"] = split_hparams_string(args["custom_hparams"])
+  continue_train(**args)
 
 
 def continue_train(base_dir: Path, train_name: str, custom_hparams: Optional[Dict[str, str]] = None) -> None:
