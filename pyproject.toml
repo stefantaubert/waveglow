@@ -1,9 +1,9 @@
 [project]
-name = "waveglow"
+name = "waveglow-cli"
 version = "0.0.1"
 description = "Command-line interface (CLI) to train WaveGlow using .wav files."
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
   {name = "Stefan Taubert", email = "stefan.taubert@posteo.me"}
@@ -71,9 +71,7 @@ include = [
   "waveglow.*",
   "waveglow_cli",
   "waveglow_tests",
-  "waveglow_tests.*",
   "waveglow_cli_tests",
-  "waveglow_cli_tests.*",
 ]
 exclude = [
   "waveglow_debug",
@@ -113,6 +111,20 @@ exclude = [
   "**/*_debug",
 ]
 useLibraryCodeForTypes = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{38,39,310}
+isolated_build = true
+
+[testenv]
+deps = 
+  pytest
+commands = 
+  waveglow-cli
+  waveglow-cli -v
+"""
 
 [build-system]
 requires = [

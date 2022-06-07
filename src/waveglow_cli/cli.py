@@ -18,7 +18,7 @@ from waveglow_cli.logging_configuration import (configure_root_logger, get_file_
 from waveglow_cli.training import init_continue_train_parser, init_train_parser
 from waveglow_cli.validation import init_validate_parser
 
-__version__ = version("waveglow")
+__version__ = version("waveglow-cli")
 
 INVOKE_HANDLER_VAR = "invoke_handler"
 
