@@ -85,6 +85,7 @@ MIT License
 Model code adapted from [Nvidia](https://github.com/NVIDIA/waveglow).
 
 Paper:
+
 - [Waveglow: A Flow-based Generative Network for Speech Synthesis](https://ieeexplore.ieee.org/document/8683143)
 
 Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – Project-ID 416228727 – CRC 1410
