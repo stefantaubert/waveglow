@@ -10,6 +10,7 @@ from waveglow.audio_utils import get_wav_tensor_segment
 from waveglow.hparams import HParams
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.typing import Entries
+from waveglow.utils import try_copy_to
 
 
 class MelLoader(Dataset):
@@ -19,6 +20,7 @@ class MelLoader(Dataset):
   """
 
   def __init__(self, prepare_ds_data: Entries, hparams: HParams, device: torch.device, logger: Logger):
+    self.device = device
     self.taco_stft = TacotronSTFT(hparams, device, logger=logger)
     self.hparams = hparams
     self._logger = logger
@@ -47,7 +49,8 @@ class MelLoader(Dataset):
       wav_tensor = self.taco_stft.get_wav_tensor_from_file(self.wav_paths[index])
     wav_tensor = get_wav_tensor_segment(wav_tensor, self.hparams.segment_length)
     mel_tensor = self.taco_stft.get_mel_tensor(wav_tensor)
-
+    mel_tensor = try_copy_to(mel_tensor, self.device)
+    wav_tensor = try_copy_to(wav_tensor, self.device)
     return (mel_tensor, wav_tensor)
 
   def __len__(self):

@@ -44,6 +44,7 @@ class Synthesizer():
       waveglow=model,
       hparams=hparams,
       mode="zeros",
+      device=device,
       logger=logger,
     )
 

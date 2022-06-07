@@ -1,6 +1,7 @@
 import dataclasses
 import json
 import logging
+from multiprocessing import cpu_count
 import os
 import random
 from dataclasses import asdict, dataclass
@@ -13,13 +14,19 @@ import numpy as np
 import torch
 from matplotlib.figure import Figure
 from scipy.spatial.distance import cosine
-from torch import Module, Tensor, nn
+from torch import Tensor, nn
+from torch.nn import Module
 from torch.optim.optimizer import Optimizer  # pylint: disable=no-name-in-module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 _T = TypeVar('_T')
 PYTORCH_EXT = ".pt"
+
+
+def set_torch_thread_to_max() -> None:
+  torch.set_num_threads(cpu_count())
+  torch.set_num_interop_threads(cpu_count())
 
 
 def split_hparams_string(hparams: Optional[str]) -> Optional[Dict[str, str]]:

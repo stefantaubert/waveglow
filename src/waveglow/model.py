@@ -1,10 +1,13 @@
 # For copyright see LICENCE
 
+from typing import cast
+
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 
 from waveglow.hparams import HParams
+from waveglow.utils import try_copy_to
 
 
 @torch.jit.script
@@ -49,16 +52,16 @@ class Invertible1x1Conv(torch.nn.Module):
         # Reverse computation
         W_inverse = W.float().inverse()
         W_inverse = Variable(W_inverse[..., None])
-        if z.type() == 'torch.cuda.HalfTensor':
+        if cast(str, z.type()).endswith('.HalfTensor'):
           W_inverse = W_inverse.half()
         self.W_inverse = W_inverse
       z = F.conv1d(z, self.W_inverse, bias=None, stride=1, padding=0)
       return z
-    else:
-      # Forward computation
-      log_det_W = batch_size * n_of_groups * torch.logdet(W)
-      z = self.conv(z)
-      return z, log_det_W
+
+    # Forward computation
+    log_det_W = batch_size * n_of_groups * torch.logdet(W)
+    z = self.conv(z)
+    return z, log_det_W
 
 
 class WN(torch.nn.Module):
@@ -223,15 +226,16 @@ class WaveGlow(torch.nn.Module):
     spect = spect.unfold(2, self.n_group, self.n_group).permute(0, 2, 1, 3)
     spect = spect.contiguous().view(spect.size(0), spect.size(1), -1).permute(0, 2, 1)
 
-    if spect.type() == 'torch.cuda.HalfTensor':
-      audio = torch.cuda.HalfTensor(spect.size(0),
-                                    self.n_remaining_channels,
-                                    spect.size(2)).normal_()
+    if cast(str, spect.type()).endswith('.HalfTensor'):
+      audio = torch.HalfTensor(spect.size(0),
+                               self.n_remaining_channels,
+                               spect.size(2))
     else:
-      audio = torch.cuda.FloatTensor(spect.size(0),
-                                     self.n_remaining_channels,
-                                     spect.size(2)).normal_()
-
+      audio = torch.FloatTensor(spect.size(0),
+                                self.n_remaining_channels,
+                                spect.size(2))
+    audio = try_copy_to(audio, spect.device)
+    audio = audio.normal_()
     audio = torch.autograd.Variable(sigma * audio)
 
     for k in reversed(range(self.n_flows)):
@@ -249,10 +253,16 @@ class WaveGlow(torch.nn.Module):
       audio = self.convinv[k](audio, reverse=True)
 
       if k % self.n_early_every == 0 and k > 0:
-        if spect.type() == 'torch.cuda.HalfTensor':
-          z = torch.cuda.HalfTensor(spect.size(0), self.n_early_size, spect.size(2)).normal_()
+        if cast(str, spect.type()).endswith('.HalfTensor'):
+          # if spect.type() == 'torch.cuda.HalfTensor':
+          z = torch.HalfTensor(spect.size(0), self.n_early_size,
+                               spect.size(2))
         else:
-          z = torch.cuda.FloatTensor(spect.size(0), self.n_early_size, spect.size(2)).normal_()
+          z = torch.FloatTensor(spect.size(0), self.n_early_size,
+                                spect.size(2))
+
+        z = try_copy_to(z, spect.device)
+        z = z.normal_()
         audio = torch.cat((sigma * z, audio), 1)
 
     audio = audio.permute(0, 2, 1).contiguous().view(audio.size(0), -1).data

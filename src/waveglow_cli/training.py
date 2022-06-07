@@ -4,7 +4,8 @@ from tempfile import gettempdir
 
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import train
-from waveglow.utils import get_last_checkpoint, prepare_logger, split_hparams_string
+from waveglow.utils import (get_last_checkpoint, prepare_logger, set_torch_thread_to_max,
+                            split_hparams_string)
 from waveglow_cli.argparse_helper import (get_optional, parse_device, parse_existing_directory,
                                           parse_existing_file, parse_non_empty, parse_path)
 from waveglow_cli.defaults import DEFAULT_DEVICE
@@ -41,6 +42,7 @@ def init_train_parser(parser: ArgumentParser) -> None:
 
 
 def train_ns(ns: Namespace) -> bool:
+  set_torch_thread_to_max()
   ns.log_path.parent.mkdir(parents=True, exist_ok=True)
   logger = prepare_logger(ns.log_path, reset=True)
 
@@ -85,6 +87,8 @@ def init_continue_train_parser(parser: ArgumentParser) -> None:
 
 
 def continue_train_ns(ns: Namespace) -> bool:
+  set_torch_thread_to_max()
+
   logger = prepare_logger(ns.log_path, reset=False)
 
   trainset = load_dataset(ns.train_folder)

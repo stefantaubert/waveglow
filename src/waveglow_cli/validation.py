@@ -12,7 +12,8 @@ from waveglow.audio_utils import float_to_wav
 from waveglow.image_utils import stack_images_vertically
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.typing import Entry
-from waveglow.utils import get_checkpoint, get_last_checkpoint, prepare_logger, split_hparams_string
+from waveglow.utils import (get_checkpoint, get_last_checkpoint, prepare_logger,
+                            set_torch_thread_to_max, split_hparams_string)
 from waveglow.validation import ValidationEntries, ValidationEntryOutput, get_df, validate
 from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSetAction,
                                           get_optional, parse_device, parse_existing_directory,
@@ -108,6 +109,7 @@ def init_validate_parser(parser: ArgumentParser) -> None:
 
 
 def validate_ns(ns: Namespace) -> bool:
+  set_torch_thread_to_max()
   data = load_dataset(ns.dataset_dir)
 
   iterations: OrderedSet[int]

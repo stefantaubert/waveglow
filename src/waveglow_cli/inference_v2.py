@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
+from tacotron.utils import try_copy_to
 from tqdm import tqdm
 
 from waveglow.audio_utils import float_to_wav, get_duration_s, normalize_wav, plot_melspec_np
@@ -19,7 +20,8 @@ from waveglow.image_utils import (calculate_structual_similarity_np,
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
-from waveglow.utils import cosine_dist_mels, get_all_files_in_all_subfolders
+from waveglow.utils import (cosine_dist_mels, get_all_files_in_all_subfolders,
+                            set_torch_thread_to_max)
 from waveglow_cli.argparse_helper import (parse_device, parse_existing_directory,
                                           parse_existing_file, parse_float_between_zero_and_one,
                                           parse_non_negative_integer, parse_path)
@@ -66,6 +68,7 @@ def init_inference_v2_parser(parser: ArgumentParser) -> None:
 
 def infer_mels(ns: Namespace) -> bool:
   logger = getLogger(__name__)
+  set_torch_thread_to_max()
 
   output_directory = ns.output_directory
   if output_directory is None:
@@ -97,7 +100,7 @@ def infer_mels(ns: Namespace) -> bool:
     logger=logger,
   )
 
-  taco_stft = TacotronSTFT(synth.hparams, device, logger=logger)
+  taco_stft = TacotronSTFT(synth.hparams, ns.device, logger=logger)
 
   all_mel_files = tqdm(all_mel_files, unit=" mel(s)", ncols=100, desc="Inferring")
   for mel_path in all_mel_files:
@@ -105,7 +108,8 @@ def infer_mels(ns: Namespace) -> bool:
 
     logger.debug(f"Loading mel from {mel_path} ...")
     mel = np.load(mel_path)
-    mel_var = torch.FloatTensor(mel, device=ns.device)
+    mel_var = torch.FloatTensor(mel)
+    mel_var = try_copy_to(mel_var, ns.device)
     #del mel
     #mel_var = torch.autograd.Variable(mel_torch)
     mel_var = mel_var.unsqueeze(0)
