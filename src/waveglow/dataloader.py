@@ -18,8 +18,8 @@ class MelLoader(Dataset):
   spectrogram, audio pair.
   """
 
-  def __init__(self, prepare_ds_data: Entries, hparams: HParams, logger: Logger):
-    self.taco_stft = TacotronSTFT(hparams, logger=logger)
+  def __init__(self, prepare_ds_data: Entries, hparams: HParams, device: torch.device, logger: Logger):
+    self.taco_stft = TacotronSTFT(hparams, device, logger=logger)
     self.hparams = hparams
     self._logger = logger
 
@@ -47,6 +47,7 @@ class MelLoader(Dataset):
       wav_tensor = self.taco_stft.get_wav_tensor_from_file(self.wav_paths[index])
     wav_tensor = get_wav_tensor_segment(wav_tensor, self.hparams.segment_length)
     mel_tensor = self.taco_stft.get_mel_tensor(wav_tensor)
+
     return (mel_tensor, wav_tensor)
 
   def __len__(self):
@@ -55,16 +56,16 @@ class MelLoader(Dataset):
 
 def parse_batch(batch) -> Tuple[torch.autograd.Variable, torch.autograd.Variable]:
   mel, audio = batch
-  mel = torch.autograd.Variable(mel.cuda())
-  audio = torch.autograd.Variable(audio.cuda())
+  mel = torch.autograd.Variable(mel)
+  audio = torch.autograd.Variable(audio)
   return (mel, audio), (mel, audio)
 
 
-def prepare_trainloader(hparams: HParams, trainset: Entries, logger: Logger) -> None:
+def prepare_trainloader(hparams: HParams, trainset: Entries, device: torch.device, logger: Logger) -> None:
   # logger.info(
   #   f"Duration trainset {trainset.total_duration_s / 60:.2f}m / {trainset.total_duration_s / 60 / 60:.2f}h")
 
-  trn = MelLoader(trainset, hparams, logger)
+  trn = MelLoader(trainset, hparams, device, logger)
 
   train_sampler = None
   shuffle = False  # maybe set to true bc taco is also true
@@ -82,11 +83,11 @@ def prepare_trainloader(hparams: HParams, trainset: Entries, logger: Logger) -> 
   return train_loader
 
 
-def prepare_valloader(hparams: HParams, valset: Entries, logger: Logger) -> None:
+def prepare_valloader(hparams: HParams, valset: Entries, device: torch.device, logger: Logger) -> None:
   # logger.info(
   #   f"Duration valset {valset.total_duration_s / 60:.2f}m / {valset.total_duration_s / 60 / 60:.2f}h")
 
-  val = MelLoader(valset, hparams, logger)
+  val = MelLoader(valset, hparams, device, logger)
   val_sampler = None
 
   val_loader = DataLoader(

@@ -4,8 +4,7 @@ from logging import Logger
 import torch
 from librosa.filters import mel as librosa_mel_fn
 
-from waveglow.audio_utils import (FLOAT32_64_MAX_WAV, FLOAT32_64_MIN_WAV,
-                                  wav_to_float32_tensor)
+from waveglow.audio_utils import FLOAT32_64_MAX_WAV, FLOAT32_64_MIN_WAV, wav_to_float32_tensor
 from waveglow.stft import STFT
 
 
@@ -53,16 +52,17 @@ class TSTFTHParams(STFTHParams):
 
 
 class TacotronSTFT(torch.nn.Module):  # todo rename to Mel
-  def __init__(self, hparams: TSTFTHParams, logger: Logger):
+  def __init__(self, hparams: TSTFTHParams, device: torch.device, logger: Logger):
     super().__init__()
     self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
     self.sampling_rate = hparams.sampling_rate
     self.stft_fn = STFT(
-        filter_length=hparams.filter_length,
-        hop_length=hparams.hop_length,
-        win_length=hparams.win_length,
-        window=hparams.window,
+      device=device,
+      filter_length=hparams.filter_length,
+      hop_length=hparams.hop_length,
+      win_length=hparams.win_length,
+      window=hparams.window,
     )
 
     mel_basis = librosa_mel_fn(

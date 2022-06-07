@@ -21,7 +21,7 @@ from waveglow.utils import (SaveIterationSettings, check_save_it, copy_state_dic
                             get_continue_batch_iteration, get_continue_epoch,
                             get_formatted_current_total, get_pytorch_filename, init_cuddn,
                             init_cuddn_benchmark, init_torch_seed, log_hparams,
-                            overwrite_custom_hparams, skip_batch, validate_model)
+                            overwrite_custom_hparams, skip_batch, try_copy_to, validate_model)
 
 
 class WaveGlowLoss(torch.nn.Module):
@@ -46,9 +46,9 @@ class WaveGlowLoss(torch.nn.Module):
     return result
 
 
-def load_model(hparams: HParams, state_dict: Optional[dict]) -> WaveGlow:
+def load_model(hparams: HParams, state_dict: Optional[dict], device: torch.device) -> WaveGlow:
   model = WaveGlow(hparams)
-  model = model.cuda()
+  model = try_copy_to(model, device)
 
   if state_dict is not None:
     model.load_state_dict(state_dict)
@@ -87,7 +87,7 @@ def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow) -> None:
   )
 
 
-def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entries, valset: Entries, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow]) -> None:
+def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entries, valset: Entries, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow], device: torch.device) -> None:
   complete_start = time.time()
   wg_logger = WaveglowLogger(logdir)
 
@@ -105,6 +105,7 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
     hparams=hparams,
     checkpoint=checkpoint,
     logger=logger,
+    device=device,
   )
 
   iteration = get_iteration(checkpoint)
@@ -120,18 +121,20 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
   train_loader = prepare_trainloader(
     hparams=hparams,
     trainset=trainset,
+    device=device,
     logger=logger
   )
 
   val_loader = prepare_valloader(
     hparams=hparams,
     valset=valset,
+    device=device,
     logger=logger
   )
 
   batch_iterations = len(train_loader)
   if batch_iterations == 0:
-    logger.error("Not enough trainingdata.")
+    logger.error("Not enough training data.")
     raise Exception()
 
   # Get shared output_directory ready
@@ -246,10 +249,11 @@ def load_optimizer(model_parameters: Iterator[Parameter], hparams: OptimizerHPar
   return optimizer
 
 
-def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], logger: Logger) -> None:
+def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], device: torch.device, logger: Logger) -> None:
   model = load_model(
     hparams=hparams,
     state_dict=checkpoint.state_dict if checkpoint is not None else None,
+    device=device,
   )
 
   optimizer = load_optimizer(

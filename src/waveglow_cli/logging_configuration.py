@@ -1,7 +1,6 @@
 import logging
 import os
-from logging import (DEBUG, Formatter, Handler, Logger, LogRecord,
-                     StreamHandler, getLogger)
+from logging import DEBUG, Formatter, Handler, Logger, LogRecord, StreamHandler, getLogger
 from logging.handlers import QueueHandler
 from pathlib import Path
 from queue import Queue

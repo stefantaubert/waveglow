@@ -4,19 +4,17 @@ import logging
 import os
 import random
 from dataclasses import asdict, dataclass
-from logging import Logger
+from logging import Logger, getLogger
 from math import floor
 from pathlib import Path
-from typing import (Dict, Generator, List, Optional, Set, Tuple, Type, TypeVar,
-                    Union)
+from typing import Dict, Generator, List, Optional, Set, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import torch
 from matplotlib.figure import Figure
 from scipy.spatial.distance import cosine
-from torch import Tensor, nn
-from torch.optim.optimizer import \
-    Optimizer  # pylint: disable=no-name-in-module
+from torch import Module, Tensor, nn
+from torch.optim.optimizer import Optimizer  # pylint: disable=no-name-in-module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -212,7 +210,8 @@ def init_global_seeds(seed: int) -> None:
   np.random.seed(seed)
   torch.random.manual_seed(seed)
   torch.manual_seed(seed)
-  torch.cuda.manual_seed(seed)
+  if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
   # only on multi GPU
   # torch.cuda.manual_seed_all(seed)
 
@@ -285,17 +284,21 @@ def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float) -
     param_group['lr'] = learning_rate
 
 
-def get_mask_from_lengths(lengths) -> None:
-  max_len = torch.max(lengths).item()
-  ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
-  mask = (ids < lengths.unsqueeze(1)).bool()
-  return mask
-
-
 def copy_state_dict(state_dict: Dict[str, Tensor], to_model: nn.Module, ignore: List[str]) -> None:
   # TODO: ignore as set
   model_dict = {k: v for k, v in state_dict.items() if k not in ignore}
   update_state_dict(to_model, model_dict)
+
+
+def try_copy_to(x: Union[Tensor, Module], device: torch.device) -> Union[Tensor, Module]:
+  try:
+    x = x.to(device, non_blocking=True)
+  except Exception as ex:
+    logger = getLogger(__name__)
+    logger.debug(ex)
+    logger.warning(f"Mapping to device '{device}' was not successful, therefore using CPU!")
+    x = x.to("cpu", non_blocking=True)
+  return x
 
 
 def update_state_dict(model: nn.Module, updates: Dict[str, Tensor]) -> None:
@@ -457,7 +460,8 @@ def filter_checkpoints(iterations: List[int], select: Optional[int], min_it: Opt
 
 def init_torch_seed(seed: int) -> None:
   torch.manual_seed(seed)
-  torch.cuda.manual_seed(seed)
+  if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
 
 
 def init_cuddn(enabled: bool) -> None:
@@ -478,14 +482,6 @@ def get_pytorch_basename(filename: str) -> None:
 
 def is_pytorch_file(filename: str) -> None:
   return filename.endswith(PYTORCH_EXT)
-
-
-def to_gpu(x) -> torch.autograd.Variable:
-  x = x.contiguous()
-
-  if torch.cuda.is_available():
-    x = x.cuda(non_blocking=True)
-  return torch.autograd.Variable(x)
 
 
 def figure_to_numpy_rgb(figure: Figure) -> np.ndarray:

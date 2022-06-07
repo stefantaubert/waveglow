@@ -2,10 +2,8 @@ import datetime
 import random
 from dataclasses import dataclass
 from logging import Logger
-from pathlib import Path
 from typing import Callable, Dict, List, Optional, Set
 
-import imageio
 import numpy as np
 import torch
 from mel_cepstral_distance import get_metrics_mels
@@ -19,7 +17,7 @@ from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.typing import Entries, Entry
-from waveglow.utils import cosine_dist_mels
+from waveglow.utils import cosine_dist_mels, try_copy_to
 
 
 @dataclass
@@ -124,7 +122,7 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: int, logger: Logger) -> None:
+def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: int, device: torch.device, logger: Logger) -> None:
   validation_entries = ValidationEntries()
 
   if full_run:
@@ -148,16 +146,17 @@ def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Opti
   synth = Synthesizer(
     checkpoint=checkpoint,
     custom_hparams=custom_hparams,
+    device=device,
     logger=logger
   )
 
-  taco_stft = TacotronSTFT(synth.hparams, logger=logger)
+  taco_stft = TacotronSTFT(synth.hparams, device, logger=logger)
 
   entry: Entry
   for entry in tqdm(entries):
     mel = taco_stft.get_mel_tensor_from_file(entry.wav_absolute_path)
     mel_var = torch.autograd.Variable(mel)
-    mel_var = mel_var.cuda()
+    mel_var = try_copy_to(mel_var, device)
     mel_var = mel_var.unsqueeze(0)
 
     timepoint = datetime.datetime.now()

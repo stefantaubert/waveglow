@@ -33,10 +33,10 @@ class Checkpoint():
     logger.info(f"Saved model to '{checkpoint_path}'.")
 
   @classmethod
-  def load(cls, checkpoint_path: Path, logger: Logger):
+  def load(cls, checkpoint_path: Path, device: torch.device, logger: Logger):
     assert checkpoint_path.is_file()
     logger.info(f"Loading model '{checkpoint_path}'...")
-    checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
+    checkpoint_dict = torch.load(checkpoint_path, map_location=device)
     result = cls(**checkpoint_dict)
     logger.info(f"Loaded model at iteration {result.iteration}.")
     return result

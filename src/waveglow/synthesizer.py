@@ -14,7 +14,7 @@ from waveglow.audio_utils import is_overamp
 from waveglow.denoiser import Denoiser
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import load_model
-from waveglow.utils import init_global_seeds, overwrite_custom_hparams
+from waveglow.utils import init_global_seeds, overwrite_custom_hparams, try_copy_to
 
 
 @dataclass
@@ -29,14 +29,14 @@ class InferenceResult():
 
 
 class Synthesizer():
-  def __init__(self, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], logger: logging.Logger):
+  def __init__(self, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], device: torch.device, logger: logging.Logger):
     super().__init__()
     self._logger = logger
 
     hparams = checkpoint.get_hparams(logger)
     hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
-    model = load_model(hparams, checkpoint.state_dict)
+    model = load_model(hparams, checkpoint.state_dict, device)
     model = model.remove_weightnorm(model)
     model = model.eval()
 
@@ -45,8 +45,11 @@ class Synthesizer():
       hparams=hparams,
       mode="zeros",
       logger=logger,
-    ).cuda()
+    )
 
+    denoiser = try_copy_to(denoiser, device)
+
+    self.device = device
     self.hparams = hparams
     self.model = model
     self.denoiser = denoiser

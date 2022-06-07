@@ -3,13 +3,16 @@ from logging import getLogger
 
 from waveglow.converter.convert import convert_glow
 from waveglow.dl_pretrained import dl_wg
-from waveglow_cli.argparse_helper import parse_path
-from waveglow_cli.defaults import DEFAULT_WAVEGLOW_VERSION
+from waveglow_cli.argparse_helper import parse_device, parse_path
+from waveglow_cli.defaults import DEFAULT_DEVICE, DEFAULT_WAVEGLOW_VERSION
 
 
 def init_download_parser(parser: ArgumentParser) -> None:
   parser.add_argument('checkpoint', type=parse_path)
-  parser.add_argument('--ver', type=int, choices=[1, 2, 3, 4, 5], default=DEFAULT_WAVEGLOW_VERSION, help="version")
+  parser.add_argument(
+    '--ver', type=int, choices=[1, 2, 3, 4, 5], default=DEFAULT_WAVEGLOW_VERSION, help="version")
+  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
+                      help="device used for conversion")
   return dl_pretrained
 
 
@@ -24,6 +27,7 @@ def dl_pretrained(ns: Namespace) -> None:
   checkpoint = convert_glow(
     origin=ns.checkpoint,
     destination=ns.checkpoint,
+    device=ns.device,
     keep_orig=False
   )
 

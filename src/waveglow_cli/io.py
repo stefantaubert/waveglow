@@ -9,8 +9,7 @@ import matplotlib.pylab as plt
 import numpy as np
 
 from waveglow.audio_utils import float_to_wav, plot_melspec
-from waveglow.image_utils import (calculate_structual_similarity,
-                                  stack_images_vertically)
+from waveglow.image_utils import calculate_structual_similarity, stack_images_vertically
 
 
 def get_train_dir(base_dir: Path, train_name: str) -> None:

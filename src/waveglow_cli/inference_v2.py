@@ -12,22 +12,18 @@ from mel_cepstral_distance import get_metrics_mels
 from pandas import DataFrame
 from tqdm import tqdm
 
-from waveglow.audio_utils import (float_to_wav, get_duration_s, normalize_wav,
-                                  plot_melspec_np)
+from waveglow.audio_utils import float_to_wav, get_duration_s, normalize_wav, plot_melspec_np
 from waveglow.globals import MCD_NO_OF_COEFFS_PER_FRAME
 from waveglow.image_utils import (calculate_structual_similarity_np,
-                                  make_same_width_by_filling_white,
-                                  stack_images_vertically)
+                                  make_same_width_by_filling_white, stack_images_vertically)
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.utils import cosine_dist_mels, get_all_files_in_all_subfolders
-from waveglow_cli.argparse_helper import (parse_existing_directory,
-                                          parse_existing_file,
-                                          parse_float_between_zero_and_one,
-                                          parse_non_negative_integer,
-                                          parse_path)
-from waveglow_cli.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_SIGMA
+from waveglow_cli.argparse_helper import (parse_device, parse_existing_directory,
+                                          parse_existing_file, parse_float_between_zero_and_one,
+                                          parse_non_negative_integer, parse_path)
+from waveglow_cli.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SIGMA
 
 
 @dataclass
@@ -57,6 +53,8 @@ def init_inference_v2_parser(parser: ArgumentParser) -> None:
   parser.add_argument('directory', type=parse_existing_directory)
   parser.add_argument("--denoiser-strength", default=DEFAULT_DENOISER_STRENGTH,
                       type=parse_float_between_zero_and_one, help='Removes model bias.')
+  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
+                      help="device used for synthesis")
   parser.add_argument("--sigma", type=parse_float_between_zero_and_one, default=DEFAULT_SIGMA)
   parser.add_argument('--custom-seed', type=parse_non_negative_integer, default=None)
   #parser.add_argument('--batch-size', type=parse_positive_integer, default=64)
@@ -84,7 +82,7 @@ def infer_mels(ns: Namespace) -> bool:
     logger.info(f"Using random seed: {seed}.")
 
   try:
-    checkpoint_inst = CheckpointWaveglow.load(ns.checkpoint, logger)
+    checkpoint_inst = CheckpointWaveglow.load(ns.checkpoint, ns.device, logger)
   except Exception as ex:
     logger.error("Checkpoint couldn't be loaded!")
     return False
@@ -95,10 +93,11 @@ def infer_mels(ns: Namespace) -> bool:
   synth = Synthesizer(
     checkpoint=checkpoint_inst,
     custom_hparams=None,
+    device=ns.device,
     logger=logger,
   )
 
-  taco_stft = TacotronSTFT(synth.hparams, logger=logger)
+  taco_stft = TacotronSTFT(synth.hparams, device, logger=logger)
 
   all_mel_files = tqdm(all_mel_files, unit=" mel(s)", ncols=100, desc="Inferring")
   for mel_path in all_mel_files:
@@ -106,7 +105,7 @@ def infer_mels(ns: Namespace) -> bool:
 
     logger.debug(f"Loading mel from {mel_path} ...")
     mel = np.load(mel_path)
-    mel_var = mel_to_torch(mel)
+    mel_var = torch.FloatTensor(mel, device=ns.device)
     #del mel
     #mel_var = torch.autograd.Variable(mel_torch)
     mel_var = mel_var.unsqueeze(0)
@@ -233,12 +232,6 @@ def infer_mels(ns: Namespace) -> bool:
 
   logger.info(f"Done. Written output to: {output_directory.absolute()}")
   return True
-
-
-def mel_to_torch(mel: np.ndarray) -> np.ndarray:
-  res = torch.FloatTensor(mel)
-  res = res.cuda()
-  return res
 
 
 @dataclass

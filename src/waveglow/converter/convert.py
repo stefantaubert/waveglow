@@ -12,11 +12,11 @@ from waveglow.hparams import HParams
 from waveglow.train import CheckpointWaveglow
 
 
-def convert_glow(origin: str, destination: str, keep_orig: bool = False) -> CheckpointWaveglow:
+def convert_glow(origin: str, destination: str, device: torch.device, keep_orig: bool = False) -> CheckpointWaveglow:
   logger = logging.getLogger(__name__)
   logger.info("Pretrained model is beeing converted...")
   tmp_out = tempfile.mktemp()
-  res = _convert_core(origin, tmp_out)
+  res = _convert_core(origin, tmp_out, device)
   if keep_orig:
     if origin == destination:
       original_path = f"{origin}.orig"
@@ -28,14 +28,14 @@ def convert_glow(origin: str, destination: str, keep_orig: bool = False) -> Chec
   return res
 
 
-def _convert_core(source: str, destination: str) -> CheckpointWaveglow:
+def _convert_core(source: str, destination: str, device: torch.device) -> CheckpointWaveglow:
   '''in version 3 there is only "model"'''
   assert source.is_file()
   logger = logging.getLogger(__name__)
   # torch.nn.Module.dump_patches = True
   rel_converter_location = str(pathlib.Path(__file__).parent.absolute())
   sys.path.append(rel_converter_location)
-  checkpoint_dict = torch.load(source, map_location='cpu')
+  checkpoint_dict = torch.load(source, map_location=device)
 
   hparams = HParams(
     # see WaveGlow paper

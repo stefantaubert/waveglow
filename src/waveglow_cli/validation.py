@@ -12,18 +12,14 @@ from waveglow.audio_utils import float_to_wav
 from waveglow.image_utils import stack_images_vertically
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.typing import Entry
-from waveglow.utils import (get_checkpoint, get_last_checkpoint,
-                            prepare_logger, split_hparams_string)
-from waveglow.validation import (ValidationEntries, ValidationEntryOutput,
-                                 get_df, validate)
-from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction,
-                                          ConvertToSetAction, get_optional,
-                                          parse_existing_directory,
-                                          parse_float_between_zero_and_one,
-                                          parse_non_empty,
-                                          parse_non_negative_integer,
-                                          parse_path, parse_positive_integer)
-from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_SEED,
+from waveglow.utils import get_checkpoint, get_last_checkpoint, prepare_logger, split_hparams_string
+from waveglow.validation import ValidationEntries, ValidationEntryOutput, get_df, validate
+from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSetAction,
+                                          get_optional, parse_device, parse_existing_directory,
+                                          parse_float_between_zero_and_one, parse_non_empty,
+                                          parse_non_negative_integer, parse_path,
+                                          parse_positive_integer)
+from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SEED,
                                    DEFAULT_SIGMA)
 from waveglow_cli.parser import load_dataset
 
@@ -101,10 +97,13 @@ def init_validate_parser(parser: ArgumentParser) -> None:
   parser.add_argument("--denoiser-strength", default=DEFAULT_DENOISER_STRENGTH,
                       type=parse_float_between_zero_and_one, help='Removes model bias.')
   parser.add_argument("--sigma", type=parse_float_between_zero_and_one, default=DEFAULT_SIGMA)
+  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
+                      help="device used for synthesis")
   parser.add_argument('--custom-hparams', type=get_optional(parse_non_empty),
                       default=None, help="custom hparams comma separated")
   parser.add_argument('--seed', type=parse_non_negative_integer, default=DEFAULT_SEED)
-  parser.add_argument('--full-run', action='store_true')
+  parser.add_argument('--full-run', action='store_true',
+                      help="validate all files from DATA-FOLDER-PATH")
   return validate_ns
 
 
@@ -131,7 +130,7 @@ def validate_ns(ns: Namespace) -> bool:
   for iteration in tqdm(sorted(iterations)):
     logger.info(f"Current checkpoint: {iteration}")
     checkpoint_path = get_checkpoint(ns.checkpoints_dir, iteration)
-    taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, logger)
+    taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, ns.device, logger)
     save_callback = partial(save_results, val_dir=ns.output_dir, iteration=iteration)
 
     validation_entries = validate(
@@ -145,6 +144,7 @@ def validate_ns(ns: Namespace) -> bool:
       sigma=ns.sigma,
       denoiser_strength=ns.denoiser_strength,
       seed=ns.seed,
+      device=ns.device,
     )
 
     result.extend(validation_entries)
