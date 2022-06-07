@@ -37,11 +37,11 @@ def formatter(prog):
 
 def get_parsers() -> Parsers:
   yield "download", "download pre-trained checkpoint from Nvidia", init_download_parser
-  yield "train", "train", init_train_parser
-  yield "continue-train", "continue-train", init_continue_train_parser
-  yield "validate", "validate", init_validate_parser
+  yield "train", "start training", init_train_parser
+  yield "continue-train", "continue training", init_continue_train_parser
+  yield "validate", "validate checkpoint(s)", init_validate_parser
   # yield "infer", "infer", init_inference_parser
-  yield "synthesize", "synthesize mel spectrograms into an audio signal", init_inference_v2_parser
+  yield "synthesize", "synthesize mel-spectrograms into an audio signal", init_inference_v2_parser
   # yield "infer-json", "infer-json", init_inference_parse_json_parser
 
 

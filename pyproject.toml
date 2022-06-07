@@ -1,7 +1,7 @@
 [project]
 name = "waveglow"
 version = "0.0.1"
-description = "CLI to train and synthesize with Waveglow."
+description = "Command-line interface (CLI) to train WaveGlow using .wav files."
 readme = "README.md"
 requires-python = ">=3.6"
 license = {text = "MIT"}

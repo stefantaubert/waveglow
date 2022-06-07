@@ -1,12 +1,12 @@
 import dataclasses
 import json
 import logging
-from multiprocessing import cpu_count
 import os
 import random
 from dataclasses import asdict, dataclass
 from logging import Logger, getLogger
 from math import floor
+from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Set, Tuple, Type, TypeVar, Union
 
