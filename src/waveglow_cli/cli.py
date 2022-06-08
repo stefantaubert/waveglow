@@ -32,7 +32,7 @@ Parsers = Generator[Tuple[str, str, Callable[[ArgumentParser],
 
 
 def formatter(prog):
-  return argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=40)
+  return argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=30)
 
 
 def get_parsers() -> Parsers:
