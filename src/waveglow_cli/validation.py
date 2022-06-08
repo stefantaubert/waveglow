@@ -16,12 +16,9 @@ from waveglow.utils import (get_checkpoint, get_last_checkpoint, prepare_logger,
                             set_torch_thread_to_max, split_hparams_string)
 from waveglow.validation import ValidationEntries, ValidationEntryOutput, get_df, validate
 from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSetAction,
-                                          get_optional, parse_device, parse_existing_directory,
-                                          parse_float_between_zero_and_one, parse_non_empty,
+                                          get_optional, parse_existing_directory, parse_non_empty,
                                           parse_non_negative_integer, parse_path,
                                           parse_positive_integer)
-from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SEED,
-                                   DEFAULT_SIGMA)
 from waveglow_cli.helper import (add_denoiser_and_sigma_arguments, add_device_argument,
                                  add_hparams_argument)
 from waveglow_cli.parser import load_dataset

@@ -21,10 +21,9 @@ from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.utils import (cosine_dist_mels, get_all_files_in_all_subfolders,
                             set_torch_thread_to_max, split_hparams_string, try_copy_to)
-from waveglow_cli.argparse_helper import (get_optional, parse_device, parse_existing_directory,
-                                          parse_existing_file, parse_float_between_zero_and_one,
-                                          parse_non_negative_integer, parse_path)
-from waveglow_cli.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SIGMA
+from waveglow_cli.argparse_helper import (get_optional, parse_existing_directory,
+                                          parse_existing_file, parse_non_negative_integer,
+                                          parse_path)
 from waveglow_cli.helper import (add_denoiser_and_sigma_arguments, add_device_argument,
                                  add_hparams_argument)
 

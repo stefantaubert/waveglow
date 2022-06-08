@@ -6,9 +6,8 @@ from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import train
 from waveglow.utils import (get_last_checkpoint, prepare_logger, set_torch_thread_to_max,
                             split_hparams_string)
-from waveglow_cli.argparse_helper import (get_optional, parse_device, parse_existing_directory,
-                                          parse_existing_file, parse_non_empty, parse_path)
-from waveglow_cli.defaults import DEFAULT_DEVICE
+from waveglow_cli.argparse_helper import (get_optional, parse_existing_directory,
+                                          parse_existing_file, parse_path)
 from waveglow_cli.helper import add_device_argument, add_hparams_argument
 from waveglow_cli.parser import load_dataset
 

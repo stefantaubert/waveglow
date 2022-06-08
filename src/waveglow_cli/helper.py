@@ -1,8 +1,7 @@
 from argparse import ArgumentParser
 
 from waveglow_cli.argparse_helper import (get_optional, parse_device,
-                                          parse_float_between_zero_and_one, parse_non_empty,
-                                          parse_positive_integer)
+                                          parse_float_between_zero_and_one, parse_non_empty)
 from waveglow_cli.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SIGMA
 
 

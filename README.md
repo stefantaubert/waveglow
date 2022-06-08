@@ -61,13 +61,6 @@ optional arguments:
 - `scipy`
 - `ordered_set>=4.1.0`
 
-## Roadmap
-
-- Outsource method to convert audio files to mel-spectrograms before training
-- Better logging
-- Add audio examples
-- Adding tests
-
 ## Pretrained Models
 
 - [LJS-v3-580000](https://tuc.cloud/index.php/s/yBRaWz5oHrFwigf): Adapted model trained on LJ Speech dataset by [Nvidia](https://api.ngc.nvidia.com/v2/models/nvidia/waveglow_ljs_256channels/versions/3/files/waveglow_256channels_ljs_v3.pt).
@@ -75,6 +68,13 @@ optional arguments:
 ## Audio Example
 
 "The North Wind and the Sun were disputing which was the stronger, when a traveler came along wrapped in a warm cloak." [Listen here](https://tuc.cloud/index.php/s/gzaYDNKinHw6GCz) (headphones recommended)
+
+## Roadmap
+
+- Outsource method to convert audio files to mel-spectrograms before training
+- Improve logging
+- Add more audio examples
+- Adding tests
 
 ## License
 

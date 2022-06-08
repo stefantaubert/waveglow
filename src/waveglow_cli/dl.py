@@ -4,8 +4,8 @@ from logging import getLogger
 from waveglow.converter.convert import convert_glow
 from waveglow.dl_pretrained import dl_wg
 from waveglow.utils import set_torch_thread_to_max
-from waveglow_cli.argparse_helper import parse_device, parse_path
-from waveglow_cli.defaults import DEFAULT_DEVICE, DEFAULT_WAVEGLOW_VERSION
+from waveglow_cli.argparse_helper import parse_path
+from waveglow_cli.defaults import DEFAULT_WAVEGLOW_VERSION
 from waveglow_cli.helper import add_device_argument
 
 
