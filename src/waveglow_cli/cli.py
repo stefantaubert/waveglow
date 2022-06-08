@@ -11,12 +11,12 @@ from time import perf_counter
 from typing import Callable, Generator, List, Tuple
 
 from waveglow_cli.argparse_helper import get_optional, parse_path
-from waveglow_cli.dl import init_download_parser
-from waveglow_cli.inference_v2 import init_inference_v2_parser
+from waveglow_cli.dl import init_downloading_parser
+from waveglow_cli.inference_v2 import init_synthesis_parser
 from waveglow_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                 try_init_file_logger)
-from waveglow_cli.training import init_continue_train_parser, init_train_parser
-from waveglow_cli.validation import init_validate_parser
+from waveglow_cli.training import init_continue_training_parser, init_training_parser
+from waveglow_cli.validation import init_validation_parser
 
 __version__ = version("waveglow-cli")
 
@@ -36,13 +36,11 @@ def formatter(prog):
 
 
 def get_parsers() -> Parsers:
-  yield "download", "download pre-trained checkpoint from Nvidia", init_download_parser
-  yield "train", "start training", init_train_parser
-  yield "continue-train", "continue training", init_continue_train_parser
-  yield "validate", "validate checkpoint(s)", init_validate_parser
-  # yield "infer", "infer", init_inference_parser
-  yield "synthesize", "synthesize mel-spectrograms into an audio signal", init_inference_v2_parser
-  # yield "infer-json", "infer-json", init_inference_parse_json_parser
+  yield "download", "download pre-trained checkpoint from Nvidia", init_downloading_parser
+  yield "train", "start training", init_training_parser
+  yield "continue-train", "continue training", init_continue_training_parser
+  yield "validate", "validate checkpoint(s)", init_validation_parser
+  yield "synthesize", "synthesize mel-spectrograms into an audio signal", init_synthesis_parser
 
 
 def print_features():
@@ -154,11 +152,11 @@ def run_prod():
 
 
 def debug_file_exists():
-  return (Path(gettempdir()) / "waveglow-debug").is_file()
+  return (Path(gettempdir()) / "waveglow-cli-debug").is_file()
 
 
 def create_debug_file():
-  (Path(gettempdir()) / "waveglow-debug").write_text("", "UTF-8")
+  (Path(gettempdir()) / "waveglow-cli-debug").write_text("", "UTF-8")
 
 
 if __name__ == "__main__":

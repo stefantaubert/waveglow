@@ -20,11 +20,13 @@ from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.synthesizer import InferenceResult, Synthesizer
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.utils import (cosine_dist_mels, get_all_files_in_all_subfolders,
-                            set_torch_thread_to_max, try_copy_to)
-from waveglow_cli.argparse_helper import (parse_device, parse_existing_directory,
+                            set_torch_thread_to_max, split_hparams_string, try_copy_to)
+from waveglow_cli.argparse_helper import (get_optional, parse_device, parse_existing_directory,
                                           parse_existing_file, parse_float_between_zero_and_one,
                                           parse_non_negative_integer, parse_path)
 from waveglow_cli.defaults import DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SIGMA
+from waveglow_cli.helper import (add_denoiser_and_sigma_arguments, add_device_argument,
+                                 add_hparams_argument)
 
 
 @dataclass
@@ -49,19 +51,24 @@ class InferenceEntry():
   mel_path: Path = None
 
 
-def init_inference_v2_parser(parser: ArgumentParser) -> None:
-  parser.add_argument('checkpoint', type=parse_existing_file)
-  parser.add_argument('directory', type=parse_existing_directory)
-  parser.add_argument("--denoiser-strength", default=DEFAULT_DENOISER_STRENGTH,
-                      type=parse_float_between_zero_and_one, help='Removes model bias.')
-  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
-                      help="device used for synthesis")
-  parser.add_argument("--sigma", type=parse_float_between_zero_and_one, default=DEFAULT_SIGMA)
-  parser.add_argument('--custom-seed', type=parse_non_negative_integer, default=None)
-  #parser.add_argument('--batch-size', type=parse_positive_integer, default=64)
-  parser.add_argument('--include-stats', action="store_true")
-  parser.add_argument('-out', '--output-directory', type=parse_path)
-  parser.add_argument('-o', '--overwrite', action="store_true")
+def init_synthesis_parser(parser: ArgumentParser) -> None:
+  parser.description = "Synthesize mel-spectrograms to audio files (.wav)."
+  parser.add_argument('checkpoint', type=parse_existing_file,
+                      metavar="CHECKPOINT", help="path to checkpoint which should be used for synthesis")
+  parser.add_argument('folder', type=parse_existing_directory, metavar="FOLDER",
+                      help="path to folder which contains the mel-spectrograms that should be synthesized")
+  add_denoiser_and_sigma_arguments(parser)
+  add_device_argument(parser)
+  add_hparams_argument(parser)
+  parser.add_argument('--custom-seed', type=get_optional(parse_non_negative_integer),
+                      default=None, help="custom seed used for synthesis; if left unset a random seed will be chosen")
+  # parser.add_argument('--batch-size', type=parse_positive_integer, default=64)
+  parser.add_argument('--include-stats', action='store_true',
+                      help="include logging of statistics (increases synthesis duration)")
+  parser.add_argument('-out', '--output-directory', type=parse_path, default=None,
+                      help="custom output directory if FOLDER should not be used")
+  parser.add_argument('-o', '--overwrite', action='store_true',
+                      help="overwrite already synthesized lines")
   return infer_mels
 
 
@@ -71,7 +78,7 @@ def infer_mels(ns: Namespace) -> bool:
 
   output_directory = ns.output_directory
   if output_directory is None:
-    output_directory = ns.directory
+    output_directory = ns.folder
   else:
     if output_directory.is_file():
       logger.error("Output directory is a file!")
@@ -89,12 +96,14 @@ def infer_mels(ns: Namespace) -> bool:
     logger.error("Checkpoint couldn't be loaded!")
     return False
 
-  all_files = get_all_files_in_all_subfolders(ns.directory)
+  all_files = get_all_files_in_all_subfolders(ns.folder)
   all_mel_files = list(file for file in all_files if file.suffix.lower() == ".npy")
+
+  custom_hparams = split_hparams_string(ns.custom_hparams)
 
   synth = Synthesizer(
     checkpoint=checkpoint_inst,
-    custom_hparams=None,
+    custom_hparams=custom_hparams,
     device=ns.device,
     logger=logger,
   )
@@ -109,8 +118,8 @@ def infer_mels(ns: Namespace) -> bool:
     mel = np.load(mel_path)
     mel_var = torch.FloatTensor(mel)
     mel_var = try_copy_to(mel_var, ns.device)
-    #del mel
-    #mel_var = torch.autograd.Variable(mel_torch)
+    # del mel
+    # mel_var = torch.autograd.Variable(mel_torch)
     mel_var = mel_var.unsqueeze(0)
     logger.debug("Inferring mel...")
     inference_result = synth.infer(mel_var, ns.sigma, ns.denoiser_strength, seed)
@@ -118,13 +127,13 @@ def infer_mels(ns: Namespace) -> bool:
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
     # out.npy.wav
-    wav_path = output_directory / mel_path.relative_to(ns.directory).parent / f"{out_stem}.wav"
+    wav_path = output_directory / mel_path.relative_to(ns.folder).parent / f"{out_stem}.wav"
     logger.debug(f"Saving {wav_path.absolute()} ...")
     wav_path.parent.mkdir(parents=True, exist_ok=True)
     float_to_wav(wav_inferred_denoised_normalized, wav_path)
 
     if ns.include_stats:
-      # wav_path = output_directory / mel_path.relative_to(ns.directory).parent / f"{out_stem}.noise.wav"
+      # wav_path = output_directory / mel_path.relative_to(ns.folder).parent / f"{out_stem}.noise.wav"
       # wav_inferred_normalized = normalize_wav(inference_result.wav)
       # float_to_wav(wav_inferred_normalized, wav_path)
 
@@ -219,7 +228,7 @@ def infer_mels(ns: Namespace) -> bool:
       # imageio.imsave("/tmp/mel_difference_denoised_img_raw.png", mel_difference_denoised_img_raw)
 
       # logger.info(val_entry)
-      #logger.info(f"Current: {val_entry.entry.identifier}")
+      # logger.info(f"Current: {val_entry.entry.identifier}")
       logger.info(f"MCD DTW: {val_entry.mcd_dtw}")
       logger.info(f"MCD DTW penalty: {val_entry.mcd_dtw_penalty}")
       logger.info(f"MCD DTW frames: {val_entry.mcd_dtw_frames}")
@@ -239,7 +248,7 @@ def infer_mels(ns: Namespace) -> bool:
 
 @dataclass
 class InferenceEntryOutput():
-  #identifier: int = None
+  # identifier: int = None
   mel_orig: np.ndarray = None
   mel_orig_img: np.ndarray = None
   orig_sr: int = None
@@ -291,7 +300,7 @@ def get_df(entries: InferenceEntries) -> DataFrame:
 
 
 def save_results(output: InferenceEntryOutput, dest_dir: Path) -> None:
-  #dest_dir = get_inferred_mel_dir(infer_dir, output.identifier)
+  # dest_dir = get_inferred_mel_dir(infer_dir, output.identifier)
   dest_dir.mkdir(parents=True, exist_ok=True)
   imageio.imsave(dest_dir / "original.png", output.mel_orig_img)
   imageio.imsave(dest_dir / "inferred_denoised.png", output.mel_inferred_denoised_img)

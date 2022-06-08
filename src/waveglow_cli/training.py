@@ -9,6 +9,7 @@ from waveglow.utils import (get_last_checkpoint, prepare_logger, set_torch_threa
 from waveglow_cli.argparse_helper import (get_optional, parse_device, parse_existing_directory,
                                           parse_existing_file, parse_non_empty, parse_path)
 from waveglow_cli.defaults import DEFAULT_DEVICE
+from waveglow_cli.helper import add_device_argument, add_hparams_argument
 from waveglow_cli.parser import load_dataset
 
 # def try_load_checkpoint(base_dir: Path, train_name: Optional[str], checkpoint: Optional[int], logger: Logger) -> Optional[CheckpointWaveglow]:
@@ -21,23 +22,27 @@ from waveglow_cli.parser import load_dataset
 #   return result
 
 
-def init_train_parser(parser: ArgumentParser) -> None:
+def init_training_parser(parser: ArgumentParser) -> None:
   default_log_path = Path(gettempdir()) / "waveglow_logs"
-  parser.add_argument('train_folder', metavar="TRAIN-FOLDER-PATH", type=parse_existing_directory)
-  parser.add_argument('val_folder', metavar="VAL-FOLDER-PATH", type=parse_existing_directory)
+  parser.description = "Start training of a new model."
+  parser.add_argument('train_folder', metavar="TRAIN-FOLDER",
+                      type=parse_existing_directory, help="path to folder containing training data (i.e., .wav <=> .TextGrid pairs)")
+  parser.add_argument('val_folder', metavar="VAL-FOLDER",
+                      type=parse_existing_directory, help="path to folder containing validation data (i.e., .wav <=> .TextGrid pairs)")
   parser.add_argument('checkpoints_dir',
-                      metavar="CHECKPOINTS-FOLDER-PATH", type=parse_path)
-  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
-                      help="device used for training")
-  parser.add_argument('--custom-hparams', type=get_optional(parse_non_empty),
-                      default=None, help="custom hparams comma separated")
+                      metavar="CHECKPOINTS-FOLDER", type=parse_path, help="path to folder to write checkpoints")
+  add_device_argument(parser)
+  add_hparams_argument(parser)
   # Pretrained model
-  parser.add_argument('--pretrained-model', type=get_optional(parse_existing_file), default=None)
+  parser.add_argument('--pre-trained-model', type=get_optional(parse_existing_file), metavar="PRE-TRAINED-MODEL",
+                      default=None, help="path to checkpoint that will be used for warm-start")
   # Warm start
-  parser.add_argument('--warm-start', action='store_true')
-  parser.add_argument('--tl-dir', type=parse_path, default=default_log_path)
-  parser.add_argument('--log-path', type=parse_path,
-                      default=default_log_path / "log.txt")
+  parser.add_argument('--warm-start', action='store_true',
+                      help="warm start using PRE-TRAINED-MODEL")
+  parser.add_argument('--tl-dir', type=parse_path, metavar="TENSORBOARD-LOG", default=default_log_path,
+                      help="path to folder for outputting tensorboard logs (currently not available)")
+  parser.add_argument('--log-path', type=parse_path, metavar="LOG",
+                      default=default_log_path / "log.txt", help="path to file for outputting training logs")
   return train_ns
 
 
@@ -47,8 +52,8 @@ def train_ns(ns: Namespace) -> bool:
   logger = prepare_logger(ns.log_path, reset=True)
 
   warm_model = None
-  if ns.pretrained_model is not None and ns.warm_start:
-    warm_model = CheckpointWaveglow.load(ns.pretrained_model, ns.device, logger)
+  if ns.pre_trained_model is not None and ns.warm_start:
+    warm_model = CheckpointWaveglow.load(ns.pre_trained_model, ns.device, logger)
 
   trainset = load_dataset(ns.train_folder)
   valset = load_dataset(ns.val_folder)
@@ -70,19 +75,20 @@ def train_ns(ns: Namespace) -> bool:
   return True
 
 
-def init_continue_train_parser(parser: ArgumentParser) -> None:
+def init_continue_training_parser(parser: ArgumentParser) -> None:
   default_log_path = Path(gettempdir()) / "waveglow_logs"
-  parser.add_argument('train_folder', metavar="TRAIN-FOLDER-PATH", type=parse_existing_directory)
-  parser.add_argument('val_folder', metavar="VAL-FOLDER-PATH", type=parse_existing_directory)
+  parser.add_argument('train_folder', metavar="TRAIN-FOLDER",
+                      type=parse_existing_directory, help="path to folder containing training data (i.e., .wav <=> .TextGrid pairs)")
+  parser.add_argument('val_folder', metavar="VAL-FOLDER",
+                      type=parse_existing_directory, help="path to folder containing validation data (i.e., .wav <=> .TextGrid pairs)")
   parser.add_argument('checkpoints_dir',
-                      metavar="CHECKPOINTS-FOLDER-PATH", type=parse_path)
-  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
-                      help="device used for training")
-  parser.add_argument('--custom-hparams', type=get_optional(parse_non_empty),
-                      default=None, help="custom hparams comma separated")
-  parser.add_argument('--tl-dir', type=parse_path, default=default_log_path)
-  parser.add_argument('--log-path', type=parse_path,
-                      default=default_log_path / "log.txt")
+                      metavar="CHECKPOINTS-FOLDER", type=parse_existing_directory, help="path to folder to write checkpoints")
+  add_device_argument(parser)
+  add_hparams_argument(parser)
+  parser.add_argument('--tl-dir', type=parse_path, metavar="TENSORBOARD-LOG", default=default_log_path,
+                      help="path to folder for outputting tensorboard logs (currently not available)")
+  parser.add_argument('--log-path', type=parse_path, metavar="LOG",
+                      default=default_log_path / "log.txt", help="path to file for outputting training logs")
   return continue_train_ns
 
 

@@ -122,13 +122,16 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: int, device: torch.device, logger: Logger) -> None:
+def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: Optional[int], device: torch.device, logger: Logger) -> None:
   validation_entries = ValidationEntries()
+
+  if seed is None:
+    seed = random.randint(1, 9999)
+    logger.info(f"As no seed was given, using random seed: {seed}.")
 
   if full_run:
     entries = data
   elif len(entry_names) == 0:
-    assert seed is not None
     assert len(data) > 0
     random.seed(seed)
     entry = random.choice(data)

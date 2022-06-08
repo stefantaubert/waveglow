@@ -22,6 +22,8 @@ from waveglow_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSe
                                           parse_positive_integer)
 from waveglow_cli.defaults import (DEFAULT_DENOISER_STRENGTH, DEFAULT_DEVICE, DEFAULT_SEED,
                                    DEFAULT_SIGMA)
+from waveglow_cli.helper import (add_denoiser_and_sigma_arguments, add_device_argument,
+                                 add_hparams_argument)
 from waveglow_cli.parser import load_dataset
 
 
@@ -84,27 +86,24 @@ def save_results(entry: Entry, output: ValidationEntryOutput, val_dir: Path, ite
   )
 
 
-def init_validate_parser(parser: ArgumentParser) -> None:
+def init_validation_parser(parser: ArgumentParser) -> None:
+  parser.description = "Validate checkpoint(s) using the validation set or any other dataset."
   parser.add_argument('checkpoints_dir',
-                      metavar="CHECKPOINTS-FOLDER-PATH", type=parse_existing_directory)
+                      metavar="CHECKPOINTS-FOLDER", type=parse_existing_directory, help="path to folder containing the checkpoints that should be validated")
   parser.add_argument('output_dir',
-                      metavar="OUTPUT-FOLDER-PATH", type=parse_path)
-  parser.add_argument('dataset_dir', metavar="DATA-FOLDER-PATH",
-                      type=parse_existing_directory, help="train or val set folder")
-  parser.add_argument('--entry-names', type=parse_non_empty, nargs="*",
-                      help="Utterance names or nothing if random", default={}, action=ConvertToSetAction)
+                      metavar="OUTPUT-FOLDER", type=parse_path, help="path to folder in which the resulting files should be written")
+  parser.add_argument('dataset_dir', metavar="DATA-FOLDER",
+                      type=parse_existing_directory, help="path to validation set folder or any other dataset")
+  add_denoiser_and_sigma_arguments(parser)
+  add_device_argument(parser)
+  add_hparams_argument(parser)
+  parser.add_argument('--full-run', action='store_true', help="validate all files in DATA-FOLDER")
+  parser.add_argument('--files', type=parse_non_empty, nargs="*", metavar="UTTERANCE",
+                      help="names of utterances in DATA-FOLDER that should be validated; if left unset a random utterance will be chosen", default=OrderedSet(), action=ConvertToSetAction)
   parser.add_argument('--custom-checkpoints',
-                      type=parse_positive_integer, nargs="*", default={}, action=ConvertToOrderedSetAction)
-  parser.add_argument("--denoiser-strength", default=DEFAULT_DENOISER_STRENGTH,
-                      type=parse_float_between_zero_and_one, help='Removes model bias.')
-  parser.add_argument("--sigma", type=parse_float_between_zero_and_one, default=DEFAULT_SIGMA)
-  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
-                      help="device used for synthesis")
-  parser.add_argument('--custom-hparams', type=get_optional(parse_non_empty),
-                      default=None, help="custom hparams comma separated")
-  parser.add_argument('--seed', type=parse_non_negative_integer, default=DEFAULT_SEED)
-  parser.add_argument('--full-run', action='store_true',
-                      help="validate all files from DATA-FOLDER-PATH")
+                      type=parse_positive_integer, nargs="*", default=OrderedSet(), action=ConvertToOrderedSetAction, help="validate checkpoints with these iterations; if left unset the last iteration is chosen")
+  parser.add_argument('--custom-seed', type=get_optional(parse_non_negative_integer),
+                      default=None, help="custom seed used for synthesis; if left unset a random seed will be chosen")
   return validate_ns
 
 
@@ -139,13 +138,13 @@ def validate_ns(ns: Namespace) -> bool:
       checkpoint=taco_checkpoint,
       data=data,
       custom_hparams=custom_hparams,
-      entry_names=ns.entry_names,
+      entry_names=ns.files,
       full_run=ns.full_run,
       save_callback=save_callback,
       logger=logger,
       sigma=ns.sigma,
       denoiser_strength=ns.denoiser_strength,
-      seed=ns.seed,
+      seed=ns.custom_seed,
       device=ns.device,
     )
 

@@ -6,18 +6,20 @@ from waveglow.dl_pretrained import dl_wg
 from waveglow.utils import set_torch_thread_to_max
 from waveglow_cli.argparse_helper import parse_device, parse_path
 from waveglow_cli.defaults import DEFAULT_DEVICE, DEFAULT_WAVEGLOW_VERSION
+from waveglow_cli.helper import add_device_argument
 
 
-def init_download_parser(parser: ArgumentParser) -> None:
-  parser.add_argument('checkpoint', type=parse_path)
+def init_downloading_parser(parser: ArgumentParser) -> None:
+  parser.description = "Download pre-trained model from Nvidia."
+  parser.add_argument('checkpoint', type=parse_path, metavar="CHECKPOINT",
+                      help="download checkpoint to this path")
   parser.add_argument(
-    '--ver', type=int, choices=[1, 2, 3, 4, 5], default=DEFAULT_WAVEGLOW_VERSION, help="version")
-  parser.add_argument("--device", type=parse_device, default=DEFAULT_DEVICE,
-                      help="device used for conversion")
-  return dl_pretrained
+    '--ver', type=int, metavar="VERSION", choices=[1, 2, 3, 5], default=DEFAULT_WAVEGLOW_VERSION, help="pre-trained version")
+  add_device_argument(parser)
+  return download_ns
 
 
-def dl_pretrained(ns: Namespace) -> None:
+def download_ns(ns: Namespace) -> None:
   logger = getLogger(__name__)
   set_torch_thread_to_max()
 
