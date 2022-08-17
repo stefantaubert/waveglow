@@ -25,9 +25,9 @@ def init_training_parser(parser: ArgumentParser) -> None:
   default_log_path = Path(gettempdir()) / "waveglow_logs"
   parser.description = "Start training of a new model."
   parser.add_argument('train_folder', metavar="TRAIN-FOLDER",
-                      type=parse_existing_directory, help="path to folder containing training data (i.e., .wav <=> .TextGrid pairs)")
+                      type=parse_existing_directory, help="path to folder containing training data (i.e., .wav files)")
   parser.add_argument('val_folder', metavar="VAL-FOLDER",
-                      type=parse_existing_directory, help="path to folder containing validation data (i.e., .wav <=> .TextGrid pairs)")
+                      type=parse_existing_directory, help="path to folder containing validation data (i.e., .wav files)")
   parser.add_argument('checkpoints_dir',
                       metavar="CHECKPOINTS-FOLDER", type=parse_path, help="path to folder to write checkpoints")
   add_device_argument(parser)
@@ -77,9 +77,9 @@ def train_ns(ns: Namespace) -> bool:
 def init_continue_training_parser(parser: ArgumentParser) -> None:
   default_log_path = Path(gettempdir()) / "waveglow_logs"
   parser.add_argument('train_folder', metavar="TRAIN-FOLDER",
-                      type=parse_existing_directory, help="path to folder containing training data (i.e., .wav <=> .TextGrid pairs)")
+                      type=parse_existing_directory, help="path to folder containing training data (i.e., .wav files)")
   parser.add_argument('val_folder', metavar="VAL-FOLDER",
-                      type=parse_existing_directory, help="path to folder containing validation data (i.e., .wav <=> .TextGrid pairs)")
+                      type=parse_existing_directory, help="path to folder containing validation data (i.e., .wav files)")
   parser.add_argument('checkpoints_dir',
                       metavar="CHECKPOINTS-FOLDER", type=parse_existing_directory, help="path to folder to write checkpoints")
   add_device_argument(parser)
