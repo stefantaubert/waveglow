@@ -13,6 +13,7 @@ from typing import Callable, Generator, List, Tuple
 from waveglow_cli.argparse_helper import get_optional, parse_path
 from waveglow_cli.dl import init_downloading_parser
 from waveglow_cli.inference_v2 import init_synthesis_parser
+from waveglow_cli.inference_wav import init_synthesis_wav_parser
 from waveglow_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                 try_init_file_logger)
 from waveglow_cli.training import init_continue_training_parser, init_training_parser
@@ -41,6 +42,7 @@ def get_parsers() -> Parsers:
   yield "continue-train", "continue training", init_continue_training_parser
   yield "validate", "validate checkpoint(s)", init_validation_parser
   yield "synthesize", "synthesize mel-spectrograms into an audio signal", init_synthesis_parser
+  yield "synthesize-wav", "synthesize audio file into an audio signal", init_synthesis_wav_parser
 
 
 def print_features():
