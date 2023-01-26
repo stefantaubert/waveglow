@@ -111,8 +111,6 @@ def infer_wavs(ns: Namespace) -> bool:
 
   all_wav_files = tqdm(all_wav_files, unit=" wav(s)", ncols=100, desc="Inferring")
   for wav_path in all_wav_files:
-    out_stem = f"{wav_path.name}"
-
     logger.debug(f"Loading wav from \"{wav_path}\"")
     mel = taco_stft.get_mel_tensor_from_file(wav_path)
     mel_var = torch.FloatTensor(mel)
@@ -126,7 +124,7 @@ def infer_wavs(ns: Namespace) -> bool:
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
     # out.npy.wav
-    wav_path = output_directory / wav_path.relative_to(ns.folder).parent / f"{out_stem}.wav"
+    wav_path = output_directory / wav_path.relative_to(ns.folder).parent / f"{wav_path.stem}.wav"
     logger.debug(f"Saving {wav_path.absolute()} ...")
     wav_path.parent.mkdir(parents=True, exist_ok=True)
     float_to_wav(wav_inferred_denoised_normalized, wav_path)

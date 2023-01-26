@@ -111,8 +111,6 @@ def infer_mels(ns: Namespace) -> bool:
 
   all_mel_files = tqdm(all_mel_files, unit=" mel(s)", ncols=100, desc="Inferring")
   for mel_path in all_mel_files:
-    out_stem = f"{mel_path.name}"
-
     logger.debug(f"Loading mel from {mel_path} ...")
     mel = np.load(mel_path)
     mel_var = torch.FloatTensor(mel)
@@ -126,7 +124,7 @@ def infer_mels(ns: Namespace) -> bool:
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
     # out.npy.wav
-    wav_path = output_directory / mel_path.relative_to(ns.folder).parent / f"{out_stem}.wav"
+    wav_path = output_directory / mel_path.relative_to(ns.folder).parent / f"{mel_path.stem}.wav"
     logger.debug(f"Saving {wav_path.absolute()} ...")
     wav_path.parent.mkdir(parents=True, exist_ok=True)
     float_to_wav(wav_inferred_denoised_normalized, wav_path)
