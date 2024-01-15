@@ -8,7 +8,7 @@ import wget
 # src 5: https://catalog.ngc.nvidia.com/orgs/nvidia/teams/adlr/models/waveglow/files
 
 
-def dl_wg(destination: Path, version: int) -> None:
+def download_pretrained_model(destination: Path, version: int) -> None:
   logger = getLogger(__name__)
   logger.info(f"Downloading pretrained waveglow model v{version} from Nvidia...")
 

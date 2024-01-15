@@ -12,11 +12,14 @@ from waveglow.hparams import HParams
 from waveglow.train import CheckpointWaveglow
 
 
-def convert_glow(origin: str, destination: str, device: torch.device, keep_orig: bool = False) -> CheckpointWaveglow:
+def convert_glow_files(origin: str, destination: str, device: torch.device, keep_orig: bool = False) -> CheckpointWaveglow:
   logger = logging.getLogger(__name__)
   logger.info("Pretrained model is beeing converted...")
   tmp_out = tempfile.mktemp()
-  res = _convert_core(origin, tmp_out, device)
+  res = convert_glow(origin, device)
+  logger.info("Successfully converted.")
+  res.save(tmp_out, logger)
+
   if keep_orig:
     if origin == destination:
       original_path = f"{origin}.orig"
@@ -28,10 +31,8 @@ def convert_glow(origin: str, destination: str, device: torch.device, keep_orig:
   return res
 
 
-def _convert_core(source: str, destination: str, device: torch.device) -> CheckpointWaveglow:
-  '''in version 3 there is only "model"'''
+def convert_glow(source: str, device: torch.device) -> CheckpointWaveglow:
   assert source.is_file()
-  logger = logging.getLogger(__name__)
   # torch.nn.Module.dump_patches = True
   rel_converter_location = str(pathlib.Path(__file__).parent.absolute())
   sys.path.append(rel_converter_location)
@@ -72,6 +73,7 @@ def _convert_core(source: str, destination: str, device: torch.device) -> Checkp
   # if "learning_rate" in checkpoint_dict.keys():
   #   learning_rate = checkpoint_dict["learning_rate"]
 
+  '''in version 3 there is only "model"'''
   state_dict = {}
   if "model" in checkpoint_dict.keys():
     model = checkpoint_dict["model"]
@@ -85,7 +87,4 @@ def _convert_core(source: str, destination: str, device: torch.device) -> Checkp
     state_dict=state_dict
   )
 
-  res.save(destination, logger)
-
-  logger.info("Successfully converted.")
   return res

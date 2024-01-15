@@ -1,8 +1,8 @@
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
 
-from waveglow.converter.convert import convert_glow
-from waveglow.dl_pretrained import dl_wg
+from waveglow.converter.convert import convert_glow_files
+from waveglow.dl_pretrained import download_pretrained_model
 from waveglow.utils import set_torch_thread_to_max
 from waveglow_cli.argparse_helper import parse_path
 from waveglow_cli.defaults import DEFAULT_WAVEGLOW_VERSION
@@ -23,12 +23,12 @@ def download_ns(ns: Namespace) -> None:
   logger = getLogger(__name__)
   set_torch_thread_to_max()
 
-  dl_wg(
+  download_pretrained_model(
     destination=ns.checkpoint,
     version=ns.ver
   )
 
-  checkpoint = convert_glow(
+  checkpoint = convert_glow_files(
     origin=ns.checkpoint,
     destination=ns.checkpoint,
     device=ns.device,
