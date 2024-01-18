@@ -18,7 +18,7 @@ def convert_glow_files(origin: str, destination: str, device: torch.device, keep
   tmp_out = tempfile.mktemp()
   res = convert_glow(origin, device)
   logger.info("Successfully converted.")
-  res.save(tmp_out, logger)
+  res.save(tmp_out)
 
   if keep_orig:
     if origin == destination:

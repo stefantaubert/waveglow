@@ -90,7 +90,7 @@ def infer_mels(ns: Namespace) -> bool:
     logger.info(f"Using random seed: {seed}.")
 
   try:
-    checkpoint_inst = CheckpointWaveglow.load(ns.checkpoint, ns.device, logger)
+    checkpoint_inst = CheckpointWaveglow.load(ns.checkpoint, ns.device)
   except Exception as ex:
     logger.error("Checkpoint couldn't be loaded!")
     return False
@@ -104,10 +104,9 @@ def infer_mels(ns: Namespace) -> bool:
     checkpoint=checkpoint_inst,
     custom_hparams=custom_hparams,
     device=ns.device,
-    logger=logger,
   )
 
-  taco_stft = TacotronSTFT(synth.hparams, ns.device, logger=logger)
+  taco_stft = TacotronSTFT(synth.hparams, ns.device)
 
   all_mel_files = tqdm(all_mel_files, unit=" mel(s)", ncols=100, desc="Inferring")
   for mel_path in all_mel_files:

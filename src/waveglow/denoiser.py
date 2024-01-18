@@ -1,4 +1,4 @@
-from logging import Logger
+from logging import getLogger
 
 import torch
 from torch import Tensor
@@ -14,7 +14,7 @@ BIAS_MEL_LENGTH = 88
 class Denoiser(torch.nn.Module):
   """ Removes model bias from audio produced with waveglow """
 
-  def __init__(self, waveglow: WaveGlow, hparams: TSTFTHParams, mode: str, device: torch.device, logger: Logger):
+  def __init__(self, waveglow: WaveGlow, hparams: TSTFTHParams, mode: str, device: torch.device):
     super().__init__()
     self.device = device
     stft = STFT(
@@ -38,6 +38,7 @@ class Denoiser(torch.nn.Module):
         device=waveglow.upsample.weight.device)
     else:
       msg = f"Mode {mode} if not supported"
+      logger = getLogger(__name__)
       logger.exception(msg)
       raise Exception(msg)
 

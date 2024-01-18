@@ -314,7 +314,8 @@ def update_state_dict(model: nn.Module, updates: Dict[str, Tensor]) -> None:
   model.load_state_dict(dummy_dict)
 
 
-def log_hparams(hparams: _T, logger: Logger) -> None:
+def log_hparams(hparams: _T) -> None:
+  logger = getLogger(__name__)
   logger.info("=== HParams ===")
   for param, val in asdict(hparams).items():
     logger.info(f"- {param} = {val}")

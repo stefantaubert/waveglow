@@ -254,7 +254,6 @@
 #     denoiser_strength=denoiser_strength,
 #     sigma=sigma,
 #     sentence_pause_s=sentence_pause_s,
-#     logger=logger,
 #     save_callback=save_callback,
 #     concatenate=concatenate,
 #     seed=seed,

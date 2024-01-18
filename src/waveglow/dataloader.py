@@ -1,5 +1,5 @@
 import random
-from logging import Logger
+from logging import getLogger
 from typing import Tuple
 
 import torch
@@ -19,11 +19,11 @@ class MelLoader(Dataset):
   spectrogram, audio pair.
   """
 
-  def __init__(self, prepare_ds_data: Entries, hparams: HParams, device: torch.device, logger: Logger):
+  def __init__(self, prepare_ds_data: Entries, hparams: HParams, device: torch.device):
+    logger = getLogger(__name__)
     self.device = device
-    self.taco_stft = TacotronSTFT(hparams, device, logger=logger)
+    self.taco_stft = TacotronSTFT(hparams, device)
     self.hparams = hparams
-    self._logger = logger
 
     data = prepare_ds_data.copy()
     random.seed(hparams.seed)
@@ -35,11 +35,11 @@ class MelLoader(Dataset):
     self.wav_paths = wav_paths
 
     if hparams.cache_wavs:
-      self._logger.info("Loading wavs into memory...")
+      logger.debug("Loading wavs into memory...")
       cache = {}
       for i, wav_path in tqdm(wav_paths.items()):
         cache[i] = self.taco_stft.get_wav_tensor_from_file(wav_path)
-      self._logger.info("Done")
+      logger.debug("Done")
       self.cache = cache
 
   def __getitem__(self, index):
@@ -64,11 +64,11 @@ def parse_batch(batch) -> Tuple[torch.autograd.Variable, torch.autograd.Variable
   return (mel, audio), (mel, audio)
 
 
-def prepare_trainloader(hparams: HParams, trainset: Entries, device: torch.device, logger: Logger) -> None:
+def prepare_trainloader(hparams: HParams, trainset: Entries, device: torch.device) -> None:
   # logger.info(
   #   f"Duration trainset {trainset.total_duration_s / 60:.2f}m / {trainset.total_duration_s / 60 / 60:.2f}h")
 
-  trn = MelLoader(trainset, hparams, device, logger)
+  trn = MelLoader(trainset, hparams, device)
 
   train_sampler = None
   shuffle = False  # maybe set to true bc taco is also true
@@ -86,11 +86,11 @@ def prepare_trainloader(hparams: HParams, trainset: Entries, device: torch.devic
   return train_loader
 
 
-def prepare_valloader(hparams: HParams, valset: Entries, device: torch.device, logger: Logger) -> None:
+def prepare_valloader(hparams: HParams, valset: Entries, device: torch.device) -> None:
   # logger.info(
   #   f"Duration valset {valset.total_duration_s / 60:.2f}m / {valset.total_duration_s / 60 / 60:.2f}h")
 
-  val = MelLoader(valset, hparams, device, logger)
+  val = MelLoader(valset, hparams, device)
   val_sampler = None
 
   val_loader = DataLoader(

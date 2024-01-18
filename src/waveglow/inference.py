@@ -113,7 +113,7 @@
 #   return res
 
 
-# def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, train_name: str, logger: Logger, fast: bool) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
+# def infer(mel_entries: List[InferMelEntry], checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, sentence_pause_s: float, save_callback: Callable[[InferenceEntryOutput], None], concatenate: bool, seed: int, train_name: str, fast: bool) -> Tuple[InferenceEntries, Tuple[Optional[np.ndarray], int]]:
 #   inference_entries = InferenceEntries()
 
 #   if len(mel_entries) == 0:
@@ -123,14 +123,13 @@
 #   synth = Synthesizer(
 #     checkpoint=checkpoint,
 #     custom_hparams=custom_hparams,
-#     logger=logger
 #   )
 
 #   # Check mels have the same sampling rate as trained waveglow model
 #   for mel_entry in mel_entries:
 #     assert mel_entry.sr == synth.hparams.sampling_rate
 
-#   taco_stft = TacotronSTFT(synth.hparams, logger=logger)
+#   taco_stft = TacotronSTFT(synth.hparams)
 #   mels_torch = []
 #   mels_torch_prepared = []
 #   for mel_entry in mel_entries:

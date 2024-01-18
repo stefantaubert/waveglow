@@ -1,7 +1,7 @@
 import datetime
 import random
 from dataclasses import dataclass
-from logging import Logger
+from logging import getLogger
 from typing import Callable, Dict, List, Optional, Set
 
 import numpy as np
@@ -25,7 +25,7 @@ class ValidationEntry():
   entry: Entry = None
   inference_result: InferenceResult = None
   seed: int = None
-  #original_duration_s: float = None
+  # original_duration_s: float = None
   diff_duration_s: float = None
   iteration: int = None
   inferred_duration_s: float = None
@@ -122,7 +122,8 @@ class ValidationEntryOutput():
   wav_inferred: np.ndarray = None
 
 
-def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: Optional[int], device: torch.device, logger: Logger) -> None:
+def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Optional[Dict[str, str]], denoiser_strength: float, sigma: float, entry_names: Set[str], full_run: bool, save_callback: Callable[[Entry, ValidationEntryOutput], None], seed: Optional[int], device: torch.device) -> None:
+  logger = getLogger(__name__)
   validation_entries = ValidationEntries()
 
   if seed is None:
@@ -150,10 +151,9 @@ def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Opti
     checkpoint=checkpoint,
     custom_hparams=custom_hparams,
     device=device,
-    logger=logger
   )
 
-  taco_stft = TacotronSTFT(synth.hparams, device, logger=logger)
+  taco_stft = TacotronSTFT(synth.hparams, device)
 
   entry: Entry
   for entry in tqdm(entries):
@@ -282,6 +282,6 @@ def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Opti
     logger.info(f"Cosine Similarity: {val_entry.cosine_similarity}")
     save_callback(entry, validation_entry_output)
     validation_entries.append(val_entry)
-    #score, diff_img = compare_mels(a, b)
+    # score, diff_img = compare_mels(a, b)
 
   return validation_entries

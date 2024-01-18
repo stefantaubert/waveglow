@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from logging import Logger
 
 import torch
 from librosa.filters import mel as librosa_mel_fn
@@ -29,7 +28,7 @@ def dynamic_range_decompression(x, C=1):
 # def get_mel(wav_path: str, custom_hparams: Optional[Dict[str, str]]) -> np.ndarray:
 #   hparams = TSTFTHParams()
 #   hparams = overwrite_custom_hparams(hparams, custom_hparams)
-#   taco_stft = TacotronSTFT(hparams, logger=getLogger())
+#   taco_stft = TacotronSTFT(hparams)
 #   orig_mel = taco_stft.get_mel_tensor_from_file(wav_path).numpy()
 #   return orig_mel
 
@@ -52,9 +51,8 @@ class TSTFTHParams(STFTHParams):
 
 
 class TacotronSTFT(torch.nn.Module):  # todo rename to Mel
-  def __init__(self, hparams: TSTFTHParams, device: torch.device, logger: Logger):
+  def __init__(self, hparams: TSTFTHParams, device: torch.device):
     super().__init__()
-    self.logger = logger
     self.n_mel_channels = hparams.n_mel_channels
     self.sampling_rate = hparams.sampling_rate
     self.stft_fn = STFT(
@@ -109,7 +107,8 @@ class TacotronSTFT(torch.nn.Module):  # todo rename to Mel
 
     if sampling_rate != self.sampling_rate:
       msg = f"{wav_path}: The sampling rate of the file ({sampling_rate}Hz) doesn't match the target sampling rate ({self.sampling_rate}Hz)!"
-      self.logger.exception(msg)
+      logger = getLogger(__name__)
+      logger.exception(msg)
       raise ValueError(msg)
 
     return wav_tensor
@@ -124,3 +123,4 @@ class TacotronSTFT(torch.nn.Module):  # todo rename to Mel
     melspec = self.mel_spectrogram(wav_tensor)
     melspec = melspec.squeeze(0)
     return melspec
+from logging import getLogger

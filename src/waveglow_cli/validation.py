@@ -128,7 +128,7 @@ def validate_ns(ns: Namespace) -> bool:
   for iteration in tqdm(sorted(iterations)):
     logger.info(f"Current checkpoint: {iteration}")
     checkpoint_path = get_checkpoint(ns.checkpoints_dir, iteration)
-    taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, ns.device, logger)
+    taco_checkpoint = CheckpointWaveglow.load(checkpoint_path, ns.device)
     save_callback = partial(save_results, val_dir=ns.output_dir, iteration=iteration)
 
     validation_entries = validate(
@@ -138,7 +138,6 @@ def validate_ns(ns: Namespace) -> bool:
       entry_names=ns.files,
       full_run=ns.full_run,
       save_callback=save_callback,
-      logger=logger,
       sigma=ns.sigma,
       denoiser_strength=ns.denoiser_strength,
       seed=ns.custom_seed,

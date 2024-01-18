@@ -1,9 +1,9 @@
 # For copyright see LICENCE
 
 import datetime
-import logging
 import time
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -29,11 +29,10 @@ class InferenceResult():
 
 
 class Synthesizer():
-  def __init__(self, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], device: torch.device, logger: logging.Logger):
+  def __init__(self, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], device: torch.device):
     super().__init__()
-    self._logger = logger
 
-    hparams = checkpoint.get_hparams(logger)
+    hparams = checkpoint.get_hparams()
     hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
     model = load_model(hparams, checkpoint.state_dict, device)
@@ -45,7 +44,6 @@ class Synthesizer():
       hparams=hparams,
       mode="zeros",
       device=device,
-      logger=logger,
     )
 
     denoiser = try_copy_to(denoiser, device)
@@ -82,7 +80,8 @@ class Synthesizer():
 
     if is_overamp(audio_np):
       was_overamplified = True
-      self._logger.warn("Waveglow output was overamplified.")
+      logger = getLogger(__name__)
+      logger.warn("Waveglow output was overamplified.")
 
     res = InferenceResult(
       sampling_rate=self.hparams.sampling_rate,

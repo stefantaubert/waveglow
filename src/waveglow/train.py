@@ -1,5 +1,4 @@
 import time
-from logging import Logger
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional
 
@@ -55,8 +54,12 @@ def load_model(hparams: HParams, state_dict: Optional[dict], device: torch.devic
 
   return model
 
+from logging import getLogger
 
-def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, iteration, wg_logger: WaveglowLogger, logger: Logger) -> None:
+
+def validate(model: nn.Module, criterion: nn.Module, val_loader: DataLoader, iteration, wg_logger: WaveglowLogger) -> None:
+  logger = getLogger(__name__)
+  
   logger.debug("Validating...")
   avg_val_loss, res = validate_model(model, criterion, val_loader, parse_batch)
   logger.info(f"Validation loss {iteration}: {avg_val_loss:9f}")
@@ -87,12 +90,13 @@ def warm_start_model(model: nn.Module, warm_model: CheckpointWaveglow) -> None:
   )
 
 
-def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entries, valset: Entries, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], logger: Logger, warm_model: Optional[CheckpointWaveglow], device: torch.device) -> None:
+def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entries, valset: Entries, save_checkpoint_dir: Path, checkpoint: Optional[CheckpointWaveglow], warm_model: Optional[CheckpointWaveglow], device: torch.device) -> None:
+  logger = getLogger(__name__)
   complete_start = time.time()
   wg_logger = WaveglowLogger(logdir)
 
   if checkpoint is not None:
-    hparams = checkpoint.get_hparams(logger)
+    hparams = checkpoint.get_hparams()
   else:
     hparams = HParams()
   # is it problematic to change the batch size?
@@ -104,7 +108,6 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
   model, optimizer = load_model_and_optimizer(
     hparams=hparams,
     checkpoint=checkpoint,
-    logger=logger,
     device=device,
   )
 
@@ -122,14 +125,12 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
     hparams=hparams,
     trainset=trainset,
     device=device,
-    logger=logger
   )
 
   val_loader = prepare_valloader(
     hparams=hparams,
     valset=valset,
     device=device,
-    logger=logger
   )
 
   batch_iterations = len(train_loader)
@@ -229,9 +230,9 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
 
         save_checkpoint_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = save_checkpoint_dir / get_pytorch_filename(iteration)
-        checkpoint.save(checkpoint_path, logger)
+        checkpoint.save(checkpoint_path)
 
-        validate(model, criterion, val_loader, iteration, wg_logger, logger)
+        validate(model, criterion, val_loader, iteration, wg_logger)
 
   duration_s = time.time() - complete_start
   logger.info(f'Finished training. Total duration: {duration_s / 60:.2f}m')
@@ -249,7 +250,7 @@ def load_optimizer(model_parameters: Iterator[Parameter], hparams: OptimizerHPar
   return optimizer
 
 
-def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], device: torch.device, logger: Logger) -> None:
+def load_model_and_optimizer(hparams: HParams, checkpoint: Optional[Checkpoint], device: torch.device) -> None:
   model = load_model(
     hparams=hparams,
     state_dict=checkpoint.state_dict if checkpoint is not None else None,

@@ -11,7 +11,7 @@ from waveglow_cli.argparse_helper import (get_optional, parse_existing_directory
 from waveglow_cli.helper import add_device_argument, add_hparams_argument
 from waveglow_cli.parser import load_dataset
 
-# def try_load_checkpoint(base_dir: Path, train_name: Optional[str], checkpoint: Optional[int], logger: Logger) -> Optional[CheckpointWaveglow]:
+# def try_load_checkpoint(base_dir: Path, train_name: Optional[str], checkpoint: Optional[int]) -> Optional[CheckpointWaveglow]:
 #   result = None
 #   if train_name:
 #     train_dir = get_train_dir(base_dir, train_name)
@@ -52,7 +52,7 @@ def train_ns(ns: Namespace) -> bool:
 
   warm_model = None
   if ns.pre_trained_model is not None and ns.warm_start:
-    warm_model = CheckpointWaveglow.load(ns.pre_trained_model, ns.device, logger)
+    warm_model = CheckpointWaveglow.load(ns.pre_trained_model, ns.device)
 
   trainset = load_dataset(ns.train_folder)
   valset = load_dataset(ns.val_folder)
@@ -66,7 +66,6 @@ def train_ns(ns: Namespace) -> bool:
     valset=valset,
     save_checkpoint_dir=ns.checkpoints_dir,
     checkpoint=None,
-    logger=logger,
     warm_model=warm_model,
     device=ns.device,
   )
@@ -102,7 +101,7 @@ def continue_train_ns(ns: Namespace) -> bool:
   custom_hparams = split_hparams_string(ns.custom_hparams)
 
   last_checkpoint_path, _ = get_last_checkpoint(ns.checkpoints_dir)
-  checkpoint = CheckpointWaveglow.load(last_checkpoint_path, ns.device, logger)
+  checkpoint = CheckpointWaveglow.load(last_checkpoint_path, ns.device)
 
   train(
     custom_hparams=custom_hparams,
@@ -111,7 +110,6 @@ def continue_train_ns(ns: Namespace) -> bool:
     valset=valset,
     save_checkpoint_dir=ns.checkpoints_dir,
     checkpoint=checkpoint,
-    logger=logger,
     warm_model=None,
     device=ns.device,
   )
