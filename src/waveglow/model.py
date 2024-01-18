@@ -33,7 +33,8 @@ class Invertible1x1Conv(torch.nn.Module):
                                 bias=False)
 
     # Sample a random orthonormal matrix to initialize weights
-    W = torch.qr(torch.FloatTensor(c, c).normal_())[0]
+    # W = torch.qr(torch.FloatTensor(c, c).normal_())[0]
+    W = torch.linalg.qr(torch.FloatTensor(c, c).normal_())[0]
 
     # Ensure determinant is 1.0 not -1.0
     if torch.det(W) < 0:
@@ -73,15 +74,15 @@ class WN(torch.nn.Module):
 
   def __init__(self, n_in_channels, n_mel_channels, hparams: HParams):
     super(WN, self).__init__()
-    assert(hparams.kernel_size % 2 == 1)
-    assert(hparams.n_channels % 2 == 0)
+    assert (hparams.kernel_size % 2 == 1)
+    assert (hparams.n_channels % 2 == 0)
     self.n_layers = hparams.n_layers
     self.n_channels = hparams.n_channels
     self.in_layers = torch.nn.ModuleList()
     self.res_skip_layers = torch.nn.ModuleList()
 
     start = torch.nn.Conv1d(n_in_channels, self.n_channels, 1)
-    start = torch.nn.utils.weight_norm(start, name='weight')
+    start = torch.nn.utils.parametrizations.weight_norm(start, name='weight')
     self.start = start
 
     # Initializing last layer to 0 makes the affine coupling layers
@@ -92,14 +93,14 @@ class WN(torch.nn.Module):
     self.end = end
 
     cond_layer = torch.nn.Conv1d(n_mel_channels, 2 * self.n_channels * self.n_layers, 1)
-    self.cond_layer = torch.nn.utils.weight_norm(cond_layer, name='weight')
+    self.cond_layer = torch.nn.utils.parametrizations.weight_norm(cond_layer, name='weight')
 
     for i in range(self.n_layers):
       dilation = 2 ** i
       padding = int((hparams.kernel_size * dilation - dilation) / 2)
       in_layer = torch.nn.Conv1d(self.n_channels, 2 * self.n_channels, hparams.kernel_size,
                                  dilation=dilation, padding=padding)
-      in_layer = torch.nn.utils.weight_norm(in_layer, name='weight')
+      in_layer = torch.nn.utils.parametrizations.weight_norm(in_layer, name='weight')
       self.in_layers.append(in_layer)
 
       # last one is not necessary
@@ -108,7 +109,7 @@ class WN(torch.nn.Module):
       else:
         res_skip_channels = self.n_channels
       res_skip_layer = torch.nn.Conv1d(self.n_channels, res_skip_channels, 1)
-      res_skip_layer = torch.nn.utils.weight_norm(res_skip_layer, name='weight')
+      res_skip_layer = torch.nn.utils.parametrizations.weight_norm(res_skip_layer, name='weight')
       self.res_skip_layers.append(res_skip_layer)
 
   def forward(self, forward_input):
@@ -147,7 +148,7 @@ class WaveGlow(torch.nn.Module):
       stride=256
     )
 
-    assert(hparams.n_group % 2 == 0)
+    assert (hparams.n_group % 2 == 0)
     self.n_flows = hparams.n_flows
     self.n_group = hparams.n_group
     self.n_early_every = hparams.n_early_every
@@ -182,7 +183,7 @@ class WaveGlow(torch.nn.Module):
 
     #  Upsample spectrogram to size of audio
     spect = self.upsample(spect)
-    assert(spect.size(2) >= audio.size(1))
+    assert (spect.size(2) >= audio.size(1))
     if spect.size(2) > audio.size(1):
       spect = spect[:, :, :audio.size(1)]
 
@@ -273,9 +274,12 @@ class WaveGlow(torch.nn.Module):
     # see: zotero://select/library/items/KIY65PZJ
     waveglow = model
     for wnet in waveglow.WN:
-      wnet.start = torch.nn.utils.remove_weight_norm(wnet.start)
+      # wnet.start = torch.nn.utils.remove_weight_norm(wnet.start, name='weight')
+      wnet.start = torch.nn.utils.parametrize.remove_parametrizations(wnet.start, 'weight')
       wnet.in_layers = remove(wnet.in_layers)
-      wnet.cond_layer = torch.nn.utils.remove_weight_norm(wnet.cond_layer)
+      # wnet.cond_layer = torch.nn.utils.remove_weight_norm(wnet.cond_layer, name='weight')
+      wnet.cond_layer = torch.nn.utils.parametrize.remove_parametrizations(
+        wnet.cond_layer, 'weight')
       wnet.res_skip_layers = remove(wnet.res_skip_layers)
     return waveglow
 
@@ -283,6 +287,7 @@ class WaveGlow(torch.nn.Module):
 def remove(conv_list) -> None:
   new_conv_list = torch.nn.ModuleList()
   for old_conv in conv_list:
-    old_conv = torch.nn.utils.remove_weight_norm(old_conv)
+    # old_conv = torch.nn.utils.remove_weight_norm(old_conv)
+    old_conv = torch.nn.utils.parametrize.remove_parametrizations(old_conv, 'weight')
     new_conv_list.append(old_conv)
   return new_conv_list
