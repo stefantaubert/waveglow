@@ -1,7 +1,7 @@
-from pathlib import Path
 
 from waveglow.dl_pretrained import download_pretrained_model
 from waveglow_tests.globals import *
+
 
 def test_component():
   if not DL_PATH.is_file():
