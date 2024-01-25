@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -9,19 +10,17 @@ from waveglow.dl_pretrained import download_pretrained_model
 from waveglow.synthesizer import Synthesizer
 from waveglow.taco_stft import TacotronSTFT
 from waveglow.utils import get_default_device, try_copy_to
+from waveglow_tests.globals import *
 
 
 def test_component():
   device = get_default_device()
-  target_path = Path("/tmp/waveglow-test.pt")
-  target_path_conv = Path("/tmp/waveglow-test-conv.pt")
-  if not target_path.is_file():
-    download_pretrained_model(target_path, version=3)
-  if not target_path_conv.is_file():
-    checkpoint = convert_glow_files(
-      target_path, target_path_conv, device=device, keep_orig=True)
+  if not DL_PATH.is_file():
+    download_pretrained_model(DL_PATH, version=3)
+  if not WG_PATH.is_file():
+    checkpoint = convert_glow_files(DL_PATH, WG_PATH, device=device, keep_orig=True)
   else:
-    checkpoint = CheckpointWaveglow.load(target_path_conv, device=device)
+    checkpoint = CheckpointWaveglow.load(WG_PATH, device=device)
 
   s = Synthesizer(checkpoint)
 

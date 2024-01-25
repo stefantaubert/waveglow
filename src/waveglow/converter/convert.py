@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 from dataclasses import asdict
+from pathlib import Path
 
 import torch
 
@@ -12,7 +13,7 @@ from waveglow.hparams import HParams
 from waveglow.train import CheckpointWaveglow
 
 
-def convert_glow_files(origin: str, destination: str, device: torch.device, keep_orig: bool = False) -> CheckpointWaveglow:
+def convert_glow_files(origin: Path, destination: Path, device: torch.device, keep_orig: bool = False) -> CheckpointWaveglow:
   logger = logging.getLogger(__name__)
   logger.info("Pretrained model is beeing converted...")
   tmp_out = tempfile.mktemp()
@@ -22,7 +23,7 @@ def convert_glow_files(origin: str, destination: str, device: torch.device, keep
 
   if keep_orig:
     if origin == destination:
-      original_path = f"{origin}.orig"
+      original_path = Path(f"{origin.absolute()}.orig")
       shutil.move(origin, original_path)
   else:
     os.remove(origin)
@@ -31,8 +32,7 @@ def convert_glow_files(origin: str, destination: str, device: torch.device, keep
   return res
 
 
-def convert_glow(source: str, device: torch.device) -> CheckpointWaveglow:
-  assert source.is_file()
+def convert_glow(source: Path, device: torch.device) -> CheckpointWaveglow:
   # torch.nn.Module.dump_patches = True
   rel_converter_location = str(pathlib.Path(__file__).parent.absolute())
   sys.path.append(rel_converter_location)
