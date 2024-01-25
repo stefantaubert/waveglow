@@ -114,6 +114,7 @@ isolated_build = true
 deps = 
   pytest
 commands = 
+  pytest
   waveglow-cli
   waveglow-cli -h
   waveglow-cli -v
