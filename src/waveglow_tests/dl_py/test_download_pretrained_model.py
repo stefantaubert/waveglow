@@ -1,4 +1,3 @@
-
 from waveglow.dl_pretrained import download_pretrained_model
 from waveglow_tests.globals import *
 
