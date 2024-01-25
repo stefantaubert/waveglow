@@ -50,26 +50,6 @@ optional arguments:
 
 "The North Wind and the Sun were disputing which was the stronger, when a traveler came along wrapped in a warm cloak." [Listen here](https://tuc.cloud/index.php/s/gzaYDNKinHw6GCz) (headphones recommended)
 
-## Dependencies
-
-- `torch`
-- `mel-cepstral-distance>=0.0.1`
-- `pandas`
-- `librosa`
-- `plotly`
-- `scikit-image`
-- `matplotlib`
-- `scikit-learn`
-- `tqdm`
-- `wget`
-- `gdown`
-- `Unidecode`
-- `Pillow`
-- `fastdtw`
-- `numpy`
-- `scipy`
-- `ordered_set>=4.1.0`
-
 ## Roadmap
 
 - Outsource method to convert audio files to mel-spectrograms before training

@@ -1,16 +1,12 @@
 [project]
 name = "waveglow-cli"
-version = "0.0.1"
+version = "0.0.2"
 description = "Command-line interface (CLI) to train WaveGlow using .wav files."
 readme = "README.md"
-requires-python = ">=3.8"
-license = {text = "MIT"}
-authors = [
-  {name = "Stefan Taubert", email = "stefan.taubert@posteo.me"}
-]
-maintainers = [
-  {name = "Stefan Taubert", email = "stefan.taubert@posteo.me"},
-]
+requires-python = ">=3.8, <3.12"
+license = { text = "MIT" }
+authors = [{ name = "Stefan Taubert", email = "pypi@stefantaubert.com" }]
+maintainers = [{ name = "Stefan Taubert", email = "pypi@stefantaubert.com" }]
 keywords = [
   "Text-to-speech",
   "Speech synthesis",
@@ -18,7 +14,7 @@ keywords = [
   "Corpus",
   "Utils",
   "Language",
-  "Linguistics"
+  "Linguistics",
 ]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
@@ -34,26 +30,26 @@ classifiers = [
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-  "torch",
-  "mel-cepstral-distance>=0.0.1",
-  "pandas",
-  "librosa",
+  "numpy>=1.18.5",
+  "scipy>=1.8.0",
+  "tqdm>=4.63.0",
+  "torch>=2.0.0",
+  "pandas>=1.0.5",
+  "librosa>=0.10.0",
+  "ordered_set>=4.1.0",
+  "mel-cepstral-distance>=0.0.3",
+  "pillow>=10.0.0",
+  "wget>=3.2",
+  "gdown>=5.0.0",
+  "fastdtw>=0.3.4",
   "plotly",
   "scikit-image",
   "matplotlib",
   "scikit-learn",
-  "tqdm",
-  "wget",
-  "gdown",
-  "Unidecode",
-  "Pillow",
-  "fastdtw",
-  "numpy",
-  "scipy",
-  "ordered_set>=4.1.0",
 ]
 
 [project.urls]
@@ -65,26 +61,23 @@ waveglow-cli = "waveglow_cli.cli:run_prod"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = [
-  "waveglow",
-  "waveglow.*",
-  "waveglow_cli",
-  "waveglow_tests",
-  "waveglow_cli_tests",
-]
+include = ["waveglow", "waveglow.*", "waveglow_cli", "waveglow_cli.*"]
 exclude = [
+  "waveglow_tests",
+  "waveglow_tests.*",
+  "waveglow_cli_tests",
+  "waveglow_cli_tests.*",
   "waveglow_debug",
+  "waveglow_debug.*",
   "waveglow_cli_debug",
+  "waveglow_cli_debug.*",
 ]
 namespaces = true
 
 [tool.pytest.ini_options]
 log_cli = true
 log_level = "DEBUG"
-testpaths = [
-  "src/waveglow_tests",
-  "src/waveglow_cli_tests"
-]
+testpaths = ["src/waveglow_tests", "src/waveglow_cli_tests"]
 console_output_style = "count"
 
 [tool.autopep8]
@@ -114,7 +107,7 @@ useLibraryCodeForTypes = true
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,39,310}
+envlist = py{38,39,310,311}
 isolated_build = true
 
 [testenv]
@@ -122,12 +115,10 @@ deps =
   pytest
 commands = 
   waveglow-cli
+  waveglow-cli -h
   waveglow-cli -v
 """
 
 [build-system]
-requires = [
-  "setuptools >= 40.9.0",
-  "wheel",
-]
+requires = ["setuptools >= 40.9.0", "wheel"]
 build-backend = "setuptools.build_meta"

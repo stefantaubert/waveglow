@@ -4,17 +4,17 @@ import datetime
 import time
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import numpy as np
 import torch
-from tqdm import tqdm
 
 from waveglow.audio_utils import is_overamp
 from waveglow.denoiser import Denoiser
 from waveglow.model_checkpoint import CheckpointWaveglow
 from waveglow.train import load_model
-from waveglow.utils import init_global_seeds, overwrite_custom_hparams, try_copy_to
+from waveglow.utils import (get_default_device, init_global_seeds, overwrite_custom_hparams,
+                            try_copy_to)
 
 
 @dataclass
@@ -29,9 +29,7 @@ class InferenceResult():
 
 
 class Synthesizer():
-  def __init__(self, checkpoint: CheckpointWaveglow, custom_hparams: Optional[Dict[str, str]], device: torch.device):
-    super().__init__()
-
+  def __init__(self, checkpoint: CheckpointWaveglow, *, custom_hparams: Optional[Dict[str, str]] = None, device: torch.device = get_default_device()):
     hparams = checkpoint.get_hparams()
     hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
@@ -53,7 +51,7 @@ class Synthesizer():
     self.model = model
     self.denoiser = denoiser
 
-  def infer(self, mel: torch.FloatTensor, sigma: float, denoiser_strength: float, seed: int) -> InferenceResult:
+  def infer(self, mel: torch.FloatTensor, *, sigma: float = 1.0, denoiser_strength: float = 0.0005, seed: int = 0) -> InferenceResult:
     timepoint = datetime.datetime.now()
     init_global_seeds(seed)
     denoising_duration = 0
@@ -81,7 +79,7 @@ class Synthesizer():
     if is_overamp(audio_np):
       was_overamplified = True
       logger = getLogger(__name__)
-      logger.warn("Waveglow output was overamplified.")
+      logger.debug("Waveglow output was overamplified.")
 
     res = InferenceResult(
       sampling_rate=self.hparams.sampling_rate,
@@ -94,13 +92,3 @@ class Synthesizer():
     )
 
     return res
-
-  def infer_all(self, mels: List[torch.FloatTensor], sigma: float, denoiser_strength: float, seed: int) -> List[InferenceResult]:
-    # TODO: remove method
-    result: List[InferenceResult] = []
-
-    for mel in tqdm(mels):
-      infer_res = self.infer(mel, sigma, denoiser_strength, seed)
-      result.append(infer_res)
-
-    return result

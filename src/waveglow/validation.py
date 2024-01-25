@@ -164,7 +164,7 @@ def validate(checkpoint: CheckpointWaveglow, data: Entries, custom_hparams: Opti
 
     timepoint = datetime.datetime.now()
     inference_result = synth.infer(
-      mel=mel_var,
+      mel_var,
       sigma=sigma,
       denoiser_strength=denoiser_strength,
       seed=seed

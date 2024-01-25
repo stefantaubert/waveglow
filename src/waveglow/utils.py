@@ -109,6 +109,14 @@ formatter = logging.Formatter(
   datefmt='%Y/%m/%d %H:%M:%S'
 )
 
+def get_default_device():
+  cuda_count = torch.cuda.device_count()
+  if cuda_count == 1:
+    return torch.device("cuda")
+  if cuda_count > 1:
+    return torch.device("cuda:0")
+  return torch.device("cpu")
+
 
 def get_default_logger():
   return logging.getLogger("default")

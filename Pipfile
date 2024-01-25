@@ -14,42 +14,25 @@ pytest = "*"
 autoflake = "*"
 twine = "*"
 tox = "*"
+build = "*"
 
 [packages]
-# text-utils = {editable = true, path = "./../text-utils"}
-# audio-utils = {editable = true, path = "./../audio-utils"}
-# image-utils = {editable = true, path = "./../image-utils"}
-# text-selection = {editable = true, path = "./../text-selection"}
-# speech-dataset-preprocessing = {editable = true, path = "./../speech-dataset-preprocessing"}
-# tts-preparation = {editable = true, path = "./../tts-preparation"}
-# pronunciation_dict_parser = {editable = true, path = "./../pronunciation_dict_parser"}
-# g2p_en = {editable = true, path = "./../g2p"}
-# sentence2pronunciation = {editable = true, path = "./../sentence2pronunciation"}
-# speech-dataset-parser = ">=0.0.1"
-# accent-analyser = {editable = true, path = "./../accent-analyser"}
-# general-utils = {editable = true, path = "./../general-utils"}
-mel-cepstral-distance = ">=0.0.1"
-pandas = "*"
-librosa = "*"
+numpy = ">=1.18.5"
+scipy = ">=1.8.0"
+tqdm = ">=4.63.0"
+torch = ">=2.0.0"
+pandas = ">=1.0.5"
+librosa = ">=0.10.0"
+ordered_set = ">=4.1.0"
+mel-cepstral-distance = ">=0.0.3"
+pillow = ">=10.0.0"
+wget = ">=3.2"
+gdown = ">=5.0.0"
+fastdtw = ">=0.3.4"
 plotly = "*"
-#torch = "==1.7.1"
-torch = "*"
 scikit-image = "*"
 matplotlib = "*"
-tqdm = "*"
-wget = "*"
-imageio = "*"
-numpy = "*"
-gdown = "*"
 scikit-learn = "*"
-scipy = "*"
-tensorboard = "*"
-Unidecode = "*"
-# PIL
-Pillow = "*"
-#pysptk = "*"
-fastdtw = "*"
-ordered-set = ">=4.1.0"
 
 [requires]
-python_version = "3.9"
+python_version = "3.11"

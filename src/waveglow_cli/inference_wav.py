@@ -118,7 +118,8 @@ def infer_wavs(ns: Namespace) -> bool:
     # mel_var = torch.autograd.Variable(mel_torch)
     mel_var = mel_var.unsqueeze(0)
     logger.debug("Inferring mel...")
-    inference_result = synth.infer(mel_var, ns.sigma, ns.denoiser_strength, seed)
+    inference_result = synth.infer(
+      mel_var, sigma=ns.sigma, denoiser_strength=ns.denoiser_strength, seed=seed)
     # del mel_var
     wav_inferred_denoised_normalized = normalize_wav(inference_result.wav_denoised)
 
