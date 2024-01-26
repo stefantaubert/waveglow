@@ -4,10 +4,12 @@ import pathlib
 import shutil
 import sys
 import tempfile
+import warnings
 from dataclasses import asdict
 from pathlib import Path
 
 import torch
+from torch.serialization import SourceChangeWarning
 
 from waveglow.hparams import HParams
 from waveglow.train import CheckpointWaveglow
@@ -36,7 +38,9 @@ def convert_glow(source: Path, device: torch.device) -> CheckpointWaveglow:
   # torch.nn.Module.dump_patches = True
   rel_converter_location = str(pathlib.Path(__file__).parent.absolute())
   sys.path.append(rel_converter_location)
+  warnings.filterwarnings("ignore", category=SourceChangeWarning)
   checkpoint_dict = torch.load(source, map_location=device)
+  warnings.filterwarnings("default", category=SourceChangeWarning)
 
   hparams = HParams(
     # see WaveGlow paper
