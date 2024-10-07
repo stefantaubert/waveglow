@@ -43,8 +43,8 @@ class Denoiser(torch.nn.Module):
       raise Exception(msg)
 
     with torch.no_grad():
-      bias_audio = waveglow.infer(mel_input, sigma=0.0).float()
-      bias_spec, _ = self.stft.transform(bias_audio)
+      bias_audio = waveglow.infer(mel_input, sigma=0.0).float() # ([1, 22528])
+      bias_spec, _ = self.stft.transform(bias_audio) # ([1, 513, 89])
 
     self.register_buffer('bias_spec', bias_spec[:, :, 0][:, :, None])
 

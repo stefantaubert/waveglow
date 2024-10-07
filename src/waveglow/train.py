@@ -102,7 +102,7 @@ def train(custom_hparams: Optional[Dict[str, str]], logdir: Path, trainset: Entr
   # is it problematic to change the batch size?
   hparams = overwrite_custom_hparams(hparams, custom_hparams)
 
-  log_hparams(hparams, logger)
+  log_hparams(hparams)
   init_torch(hparams)
 
   model, optimizer = load_model_and_optimizer(
