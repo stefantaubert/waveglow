@@ -38,8 +38,11 @@ def convert_glow(source: Path, device: torch.device) -> CheckpointWaveglow:
   # torch.nn.Module.dump_patches = True
   rel_converter_location = str(pathlib.Path(__file__).parent.absolute())
   sys.path.append(rel_converter_location)
+  #from waveglow.converter import glow
+  #torch.serialization.add_safe_globals([glow.WaveGlow])
+  #with torch.serialization.safe_globals([glow.WaveGlow]):
   warnings.filterwarnings("ignore", category=SourceChangeWarning)
-  checkpoint_dict = torch.load(source, map_location=device)
+  checkpoint_dict = torch.load(source, map_location=device, weights_only=False)
   warnings.filterwarnings("default", category=SourceChangeWarning)
 
   hparams = HParams(
